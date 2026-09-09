@@ -18,6 +18,7 @@ from pipeline.stats import build_seizure_stats, hemisphere_power, peak_from_sour
 from pipeline.window import annotated_seizure_window
 
 _METHODS = ("dspm", "sloreta")
+_OPENAI_CHAT_COMPLETIONS_URL = "https://api.openai.com/v1/chat/completions"
 
 
 @dataclass(frozen=True)
@@ -105,7 +106,18 @@ def mne_render(method, stc, out_dir, settings):
 
 
 def _complete(messages, model, api_key):
-    raise NotImplementedError("Astra completion not wired")
+    payload = json.dumps({"model": model, "messages": messages}).encode("utf-8")
+    request = urllib.request.Request(
+        _OPENAI_CHAT_COMPLETIONS_URL,
+        data=payload,
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    with urllib.request.urlopen(request) as response:
+        return json.loads(response.read())
 
 
 def main() -> int:
