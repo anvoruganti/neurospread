@@ -1,5 +1,7 @@
 .env
 pipeline/data/
+pipeline/output/
+.mplconfig/
 node_modules/
 __pycache__/
 .pytest_cache/

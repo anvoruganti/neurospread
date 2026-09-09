@@ -1,10 +1,11 @@
 import json
+import os
 from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
 
-from pipeline.run import RunConfig, _complete, run_pipeline
+from pipeline.run import RunConfig, _complete, _load_dotenv, run_pipeline
 from pipeline.window import TimeWindow
 
 
@@ -128,6 +129,26 @@ def test_complete_posts_chat_completion_with_api_key(monkeypatch):
     }
     assert captured["timeout"] == 60
     assert result == response_payload
+
+
+def test_load_dotenv_fills_unset_keys_without_overriding(tmp_path: Path, monkeypatch):
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        '# comment\n\nOPENAI_API_KEY="sk-from-file"\nALREADY_SET=from-file\nJUNK\n',
+        encoding="utf-8",
+    )
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.setenv("ALREADY_SET", "from-shell")
+
+    _load_dotenv(env_file)
+
+    assert os.environ["OPENAI_API_KEY"] == "sk-from-file"
+    assert os.environ["ALREADY_SET"] == "from-shell"
+    assert "JUNK" not in os.environ
+
+
+def test_load_dotenv_is_a_noop_when_the_file_is_absent(tmp_path: Path):
+    _load_dotenv(tmp_path / "missing.env")
 
 
 def test_run_pipeline_rejects_missing_localization_method(tmp_path: Path):
