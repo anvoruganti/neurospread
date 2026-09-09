@@ -1,0 +1,14 @@
+.env
+pipeline/data/
+node_modules/
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.next/
+web/.next/
+*.edf
+.DS_Store
+venv/
+.venv/
+.superpowers/
+.worktrees/

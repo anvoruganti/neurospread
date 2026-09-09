@@ -1,0 +1,7 @@
+numpy
+scipy
+matplotlib
+mne
+pyvista
+imageio-ffmpeg
+pytest
