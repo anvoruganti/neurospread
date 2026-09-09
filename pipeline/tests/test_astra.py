@@ -87,6 +87,22 @@ def test_complete_image_forbidden_returns_error():
     assert "image payload is not allowed" in result["message"]
 
 
+def test_malformed_response_content_returns_error():
+    def complete(messages, model, api_key):
+        return {
+            "choices": [
+                {"message": {"content": "not valid json {"}}
+            ]
+        }
+
+    result = request_walkthrough(
+        STATS, api_key="sk-test", interactive=False, complete=complete
+    )
+    assert result["status"] == "error"
+    assert result["captions"] == []
+    assert result["message"]
+
+
 def test_complete_is_called_with_gpt_6_astra():
     captured = {}
 
