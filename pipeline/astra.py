@@ -61,9 +61,7 @@ def request_walkthrough(
         return {"status": "skipped", "captions": []}
     try:
         payload = complete(build_walkthrough_prompt(stats), ASTRA_MODEL, api_key)
-        parsed = parse_walkthrough_response(payload)
-    except ImageGenerationForbidden:
-        raise
     except Exception as exc:
         return {"status": "error", "captions": [], "message": str(exc)}
+    parsed = parse_walkthrough_response(payload)
     return {"status": "ok", "captions": parsed["captions"]}

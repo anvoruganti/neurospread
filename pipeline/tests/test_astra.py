@@ -75,6 +75,18 @@ def test_api_error_degrades_without_captions():
     assert "timeout" in result["message"]
 
 
+def test_complete_image_forbidden_returns_error():
+    def complete(messages, model, api_key):
+        raise ImageGenerationForbidden("image payload is not allowed")
+
+    result = request_walkthrough(
+        STATS, api_key="sk-test", interactive=False, complete=complete
+    )
+    assert result["status"] == "error"
+    assert result["captions"] == []
+    assert "image payload is not allowed" in result["message"]
+
+
 def test_complete_is_called_with_gpt_6_astra():
     captured = {}
 
