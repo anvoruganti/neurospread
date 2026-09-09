@@ -116,7 +116,7 @@ def _complete(messages, model, api_key):
         },
         method="POST",
     )
-    with urllib.request.urlopen(request) as response:
+    with urllib.request.urlopen(request, timeout=60) as response:
         return json.loads(response.read())
 
 

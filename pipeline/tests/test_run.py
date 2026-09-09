@@ -107,8 +107,9 @@ def test_complete_posts_chat_completion_with_api_key(monkeypatch):
         def read(self):
             return json.dumps(response_payload).encode()
 
-    def fake_urlopen(request):
+    def fake_urlopen(request, *, timeout):
         captured["request"] = request
+        captured["timeout"] = timeout
         return Response()
 
     monkeypatch.setattr("pipeline.run.urllib.request.urlopen", fake_urlopen)
@@ -125,6 +126,7 @@ def test_complete_posts_chat_completion_with_api_key(monkeypatch):
         "model": "gpt-6-astra",
         "messages": messages,
     }
+    assert captured["timeout"] == 60
     assert result == response_payload
 
 
