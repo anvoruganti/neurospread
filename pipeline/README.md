@@ -189,8 +189,9 @@ text.
 
 ## Versions
 
-Verified on macOS with Python 3.12.9. Exact pins live in
-`pipeline/requirements.txt`:
+Verified on macOS with Python 3.12.9 and Node 20.19.1. Exact Python pins live in
+`pipeline/requirements.txt`. Exact site pins live in `web/package.json` and
+`web/package-lock.json`.
 
 | Package | Version |
 | --- | --- |
