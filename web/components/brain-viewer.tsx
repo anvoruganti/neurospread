@@ -402,15 +402,7 @@ export function BrainViewer({ liveQa }: BrainViewerProps) {
       ),
     [disagreement, pathMethod]
   );
-  const startParcel = path[0]?.parcel;
-  const endParcel = path[path.length - 1]?.parcel;
   const pathParcels = path.map((step) => step.parcel);
-  const pathPoints = useMemo(() => {
-    if (!data) return [] as [number, number, number][];
-    return path
-      .map((step) => parcelCentroid(data.mesh, step.parcel))
-      .filter((point): point is [number, number, number] => point !== null);
-  }, [data, path]);
   const overlayHighlights = showOverlay && !focusPath ? highlights : pathParcels;
 
   function applyAction(action: SceneAction) {
