@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import sys
 import urllib.request
 from dataclasses import dataclass
@@ -10,6 +11,9 @@ from pathlib import Path
 from typing import Any, Callable
 
 from pipeline.astra import MissingAPIKeyError, request_walkthrough
+from pipeline.cases import get_case
+from pipeline.cortex import export_browser_cortex
+from pipeline.disagreement import analyze_disagreement
 from pipeline.download import DownloadError, download_edf
 from pipeline.filters import FilterConfig, default_filter_config
 from pipeline.inverse import inverse_jobs
@@ -25,7 +29,7 @@ from pipeline.render import (
     write_still,
 )
 from pipeline.stats import build_seizure_stats, hemisphere_power, peak_from_source_data
-from pipeline.window import TimeWindow, annotated_seizure_window, crop_to_window
+from pipeline.window import TimeWindow, crop_to_window
 
 _METHODS = ("dspm", "sloreta")
 _OPENAI_CHAT_COMPLETIONS_URL = "https://api.openai.com/v1/chat/completions"
@@ -62,6 +66,10 @@ class RunConfig:
     web_public: Path
     interactive: bool
     api_key: str | None
+    case_id: str = "chb01_03"
+    skip_render: bool = False
+    skip_publish: bool = False
+    llm_walkthrough: bool = False
 
 
 def _method_stats(stc: Any, window) -> dict:
@@ -87,8 +95,9 @@ def run_pipeline(
     render_stc: Callable,
     complete: Callable,
 ) -> dict:
-    raw_path = download_edf(config.data_dir, fetch)
-    window = annotated_seizure_window()
+    case = get_case(config.case_id)
+    raw_path = download_edf(config.data_dir, fetch, case["file"])
+    window = TimeWindow(tmin=case["tmin"], tmax=case["tmax"])
     filters = default_filter_config()
     jobs = inverse_jobs(window)
 
@@ -101,9 +110,22 @@ def run_pipeline(
 
     config.out_dir.mkdir(parents=True, exist_ok=True)
     settings = shared_render_settings()
-    for method in _METHODS:
-        print(f"Rendering {method} from source-estimate screenshots", flush=True)
-        render_stc(method, estimates[method], config.out_dir, settings)
+    if not config.skip_render:
+        for method in _METHODS:
+            print(f"Rendering {method} from source-estimate screenshots", flush=True)
+            render_stc(method, estimates[method], config.out_dir, settings)
+
+    first = estimates[_METHODS[0]]
+    parcels = None
+    if all(hasattr(first, name) for name in ("times", "data", "vertex_labels", "vertices")):
+        print("Exporting browser cortex mesh and parcel time series", flush=True)
+        exported = export_browser_cortex(
+            estimates,
+            config.out_dir,
+            time_step_s=settings.time_step_s,
+            load_surfaces=_load_inflated_surface,
+        )
+        parcels = exported.get("parcels")
 
     stats = build_seizure_stats(
         recording=raw_path.name,
@@ -119,19 +141,71 @@ def run_pipeline(
         encoding="utf-8",
     )
 
-    print("Requesting Astra walkthrough from stats JSON", flush=True)
-    walkthrough = request_walkthrough(
-        stats,
-        api_key=config.api_key,
-        interactive=config.interactive,
-        complete=complete,
+    disagreement = analyze_disagreement(parcels, stats)
+    brain_dir = config.out_dir / "brain"
+    brain_dir.mkdir(parents=True, exist_ok=True)
+    (brain_dir / "disagreement.json").write_text(
+        json.dumps(disagreement, indent=2) + "\n",
+        encoding="utf-8",
     )
+    (config.out_dir / "disagreement.json").write_text(
+        json.dumps(disagreement, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
+    walkthrough = {
+        "status": "ok",
+        "source": "deterministic",
+        "captions": disagreement["captions"],
+    }
+    if config.llm_walkthrough:
+        print("Requesting optional LLM walkthrough from stats JSON", flush=True)
+        walkthrough = request_walkthrough(
+            stats,
+            api_key=config.api_key,
+            interactive=config.interactive,
+            complete=complete,
+        )
+        if walkthrough.get("status") == "ok" and not walkthrough.get("captions"):
+            walkthrough = {
+                "status": "ok",
+                "source": "deterministic",
+                "captions": disagreement["captions"],
+            }
     (config.out_dir / "astra-walkthrough.json").write_text(
         json.dumps(walkthrough, indent=2) + "\n",
         encoding="utf-8",
     )
-    copy_derived_outputs(config.out_dir, config.web_public)
-    return {"stats": stats, "walkthrough": walkthrough}
+    case_dir = config.out_dir / "cases" / config.case_id
+    _write_case_snapshot(config.out_dir, case_dir, stats, disagreement, walkthrough)
+    if not config.skip_publish:
+        copy_derived_outputs(config.out_dir, config.web_public)
+    return {"stats": stats, "walkthrough": walkthrough, "disagreement": disagreement}
+
+
+def _write_case_snapshot(
+    out_dir: Path,
+    case_dir: Path,
+    stats: dict,
+    disagreement: dict,
+    walkthrough: dict,
+) -> None:
+    case_dir.mkdir(parents=True, exist_ok=True)
+    (case_dir / "seizure-stats.json").write_text(
+        json.dumps(stats, indent=2) + "\n", encoding="utf-8"
+    )
+    (case_dir / "disagreement.json").write_text(
+        json.dumps(disagreement, indent=2) + "\n", encoding="utf-8"
+    )
+    (case_dir / "astra-walkthrough.json").write_text(
+        json.dumps(walkthrough, indent=2) + "\n", encoding="utf-8"
+    )
+    brain = out_dir / "brain"
+    if brain.exists():
+        dest = case_dir / "brain"
+        if dest.exists():
+            shutil.rmtree(dest)
+        shutil.copytree(brain, dest)
 
 
 @lru_cache(maxsize=1)
@@ -242,6 +316,28 @@ def _vertex_labels(stc) -> list[str]:
             hemi_names[np.isin(vertices, label.vertices)] = label.name
         names.extend(hemi_names.tolist())
     return names
+
+
+def _load_inflated_surface(hemi: str):
+    """Return (inflated vertices, ico-5 faces) for one hemisphere.
+
+    Vertices are the full inflated surface. Faces are ico-5 ``use_tris``, which
+    already index the source-space vertex order 0..nuse-1 matching STC rows.
+    """
+    import mne
+    import numpy as np
+
+    fs_dir, subjects_dir = _fsaverage_paths()
+    vertices, _dense_faces = mne.read_surface(
+        subjects_dir / _FSAVERAGE_SUBJECT / "surf" / f"{hemi}.inflated"
+    )
+    src = mne.read_source_spaces(
+        fs_dir / "bem" / "fsaverage-ico-5-src.fif",
+        verbose="error",
+    )
+    hemi_index = 0 if hemi == "lh" else 1
+    faces = np.asarray(src[hemi_index]["use_tris"], dtype=np.int32)
+    return np.asarray(vertices, dtype=np.float32), faces
 
 
 def mne_localize(raw_path, window, filters, jobs):

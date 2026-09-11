@@ -1,6 +1,6 @@
 # NeuroSpread
 
-Computed seizure-spread movies from one public CHB-MIT scalp EEG recording, shown on a dark clinical site with a GPT-6 Astra guide grounded in those stats.
+Computed seizure-spread movies from public CHB-MIT scalp EEG, shown on a dark clinical site. Captions and overlays come from dSPM vs sLORETA disagreement JSON. Astra is a study subject, not the runtime that draws the cortex.
 
 This is a proof of concept on public de-identified data. It uses a template MRI, not a patient scan. It is not diagnostic, not patient-specific, and not clinically validated. It must not be used for clinical decisions.
 
@@ -8,8 +8,9 @@ The movies are computed from dSPM and sLORETA source estimates. They are not gen
 
 ## Layout
 
-- [`pipeline/`](pipeline/README.md) downloads `chb01_03.edf`, solves the inverse on fsaverage for the 2996-3036 s window, renders `.mp4` / `.png`, writes stats, and optionally asks Astra for a walkthrough.
+- [`pipeline/`](pipeline/README.md) downloads CHB-MIT `chb01` EDFs, solves the inverse on fsaverage, renders the hero movies, and writes parcel and disagreement JSON. Captions are computed from those numbers.
 - [`web/`](web/README.md) is the Next.js 14 site. It plays the committed files in `web/public/` and exposes `POST /api/ask`.
+- [`study/`](study/protocol.md) is the chb01 disagreement probe: frozen prompt, author rubric, and `python -m study.run_probe`.
 
 ## Tests
 
@@ -33,7 +34,11 @@ python -m pipeline
 
 Details, limitations, PhysioNet download, and fsaverage setup are in [`pipeline/README.md`](pipeline/README.md).
 
-If `OPENAI_API_KEY` is missing in an interactive run, the CLI stops after the movies are computed and asks you to set the key.
+If `OPENAI_API_KEY` is missing, the pipeline still writes deterministic captions from disagreement JSON. Live Q&A on the site returns 503 until the key is set. After OpenAI billing includes Astra, run:
+
+```bash
+STUDY_MODELS=gpt-4o-mini,gpt-6-astra python -m study.run_probe
+```
 
 ## Site
 
@@ -43,7 +48,9 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000. The hero is the dSPM movie. sLORETA is the comparison. Live Q&A needs `OPENAI_API_KEY`. Without it, the walkthrough still shows and ask returns 503.
+Open http://localhost:3000. The hero is an interactive fsaverage cortex colored
+by the source estimate. Gold and teal overlays mark the dSPM and sLORETA peak
+parcels. Click a caption to seek. Live Q&A needs `OPENAI_API_KEY`.
 
 This app is ready for Vercel. The owner will connect it. There are no deploy steps here.
 

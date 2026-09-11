@@ -8,6 +8,7 @@ class TimeWindow:
 
 
 def annotated_seizure_window() -> TimeWindow:
+    """Hero case chb01_03. Other chb01 windows live in pipeline.cases."""
     return TimeWindow(tmin=2996.0, tmax=3036.0)
 
 

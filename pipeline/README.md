@@ -51,13 +51,18 @@ placeholder.
 10. **Render.** For each method, sample the window every second, screenshot the
     brain, and write `seizure-{method}.mp4` plus four stills into
     `stills/{method}-{i}.png`.
-11. **Stats.** Write `seizure-stats.json` with the peak time, the aparc parcel
+11. **Browser cortex.** Export the same ico-5 inflated mesh, float32 activity at
+    1 s steps, and aparc parcel time series into `brain/` for the interactive
+    site viewer. Astra does not create these files.
+12. **Stats.** Write `seizure-stats.json` with the peak time, the aparc parcel
     label at the peak, left and right hemisphere power, the window, and the
     filters.
-12. **Astra walkthrough.** Send that stats JSON to `gpt-6-astra` and write the
-    returned captions to `astra-walkthrough.json`.
-13. **Publish.** Copy the movies, stills, and JSON into `web/public/` so the
-    site does not need Python at deploy time.
+13. **Disagreement.** From parcel series and stats, classify dSPM vs sLORETA
+    (agree, adjacent, distant, hemisphere flip, optional time lag), write
+    `brain/disagreement.json`, and fill timestamped captions from those
+    numbers. No language model is required.
+14. **Publish.** Copy the movies, stills, brain mesh, and JSON into `web/public/`
+    so the site does not need Python at deploy time.
 
 ## Why template MRI, dSPM, and sLORETA
 
@@ -148,26 +153,39 @@ python -c "import mne; mne.datasets.fetch_fsaverage(verbose=True)"
 If fsaverage is missing or incomplete when the CLI runs, it exits non-zero and
 prints that command rather than falling back to anything invented.
 
-## How Astra is used
+### Cortex-only re-export
 
-`gpt-6-astra` is the guide beside the movies, never the source of them. The
-contract is stats in, text out:
+If the movies are already in `web/public/` and you only need to refresh the
+interactive mesh:
 
-- **Input:** the contents of `seizure-stats.json` and nothing else. No video
-  bytes, no frames, no request to draw anything.
-- **Output:** short timestamped captions, as
-  `{"captions": [{"t": number, "method": "dspm" | "sloreta", "text": string}]}`.
-- **Refused:** if the response contains an image payload, the pipeline raises
-  rather than accepting it.
+```bash
+python -m pipeline.export_cortex
+```
 
-Astra never produces the map, and its text is not a diagnosis. On the site it is
-labeled as written from computed stats.
+That localizes again, writes `brain/mesh.json`, `brain/activity.bin`, and
+`brain/parcels.json`, then copies them into `web/public/brain/`.
+
+## How captions and Astra are used
+
+Captions on the site are computed from `disagreement.json`. They are not an LLM
+walkthrough. The optional `llm_walkthrough` flag still exists on the pipeline
+for the old Astra caption client, but the default path does not call it.
+
+Live Q&A on the site uses `OPENAI_MODEL` (default `gpt-4o-mini`). Astra is a
+row in the disagreement probe, not the overlay engine.
+
+The probe protocol is `study/protocol.md`. Localize the other six chb01
+seizures with `python -m pipeline.localize_cases` (movies only for the hero
+file). Then `python -m study.run_probe`. After billing includes Astra:
+
+```
+STUDY_MODELS=gpt-4o-mini,gpt-6-astra python -m study.run_probe
+```
 
 ### OPENAI_API_KEY
 
-The pipeline reads `OPENAI_API_KEY` from the environment. Put it in a `.env`
-file at the repo root and `main()` will load any variables that are not already
-set:
+The site and the study runner read `OPENAI_API_KEY` from the environment. Put
+it in a `.env` file at the repo root:
 
 ```
 OPENAI_API_KEY=sk-...
@@ -175,17 +193,8 @@ OPENAI_API_KEY=sk-...
 
 `.env` is gitignored. Do not commit it, and do not print the key.
 
-If the key is missing, behavior depends on the session:
-
-- **Interactive terminal:** the pipeline stops and asks you to set the key. The
-  computed movies are still copied to `web/public/` first, so no work is lost.
-- **Non-interactive (CI):** the walkthrough is skipped and
-  `astra-walkthrough.json` is written with `"status": "skipped"`. Movies are
-  still required from MNE.
-
-If the Astra call fails while the key is present, the walkthrough JSON records
-`"status": "error"` and the movies still ship. The site falls back to static
-text.
+The inverse and movies do not need the key. If it is missing, captions still
+come from the disagreement JSON, and `/api/ask` returns 503.
 
 ## Versions
 

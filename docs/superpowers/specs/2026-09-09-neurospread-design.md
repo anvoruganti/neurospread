@@ -28,7 +28,7 @@ The visualization must come from the inverse solution on the real recording. A g
 - Patient MRI, SEEG, or any clinical decision support.
 - Chatbot personality, multi-recording explorer, or user accounts.
 - Extra Astra features (literature search, teaching modes, report export). The stats JSON is the extension point for later.
-- Live 3D in the browser. The site plays computed video.
+- Astra-generated brains, heatmaps, stills, or movies. The interactive cortex is the fsaverage template colored by the source estimate; Astra only writes about a clicked parcel and time.
 
 ## Dataset
 

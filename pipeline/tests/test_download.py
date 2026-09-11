@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from pipeline.download import PHYSIONET_EDF_URL, DownloadError, download_edf, edf_path
+from pipeline.download import PHYSIONET_EDF_URL, DownloadError, download_edf, edf_path, edf_url
 
 
 def test_edf_path_uses_chb01_03_name(tmp_path: Path):
@@ -31,3 +31,8 @@ def test_download_error_includes_url_and_path(tmp_path: Path):
     message = str(exc.value)
     assert PHYSIONET_EDF_URL in message
     assert str(tmp_path / "chb01_03.edf") in message
+
+
+def test_edf_url_uses_subject_folder(tmp_path: Path):
+    assert edf_url("chb01_04.edf") == "https://physionet.org/files/chbmit/1.0.0/chb01/chb01_04.edf"
+    assert edf_path(tmp_path, "chb01_04.edf") == tmp_path / "chb01_04.edf"

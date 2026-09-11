@@ -3,8 +3,10 @@ import path from "path";
 import { NextResponse } from "next/server";
 
 import { LIMITATIONS, buildAskMessages, isDiagnosticRequest } from "@/lib/ask";
+import { parseAskAnswer } from "@/lib/guide";
 
-const ASTRA_MODEL = "gpt-6-astra";
+// Live ask uses a cheap model. Astra is a study subject, not this route.
+const ASK_MODEL = process.env.OPENAI_MODEL?.trim() || "gpt-4o-mini";
 const OPENAI_CHAT_COMPLETIONS_URL = "https://api.openai.com/v1/chat/completions";
 
 async function readPublicJson(name: string): Promise<unknown> {
@@ -13,7 +15,12 @@ async function readPublicJson(name: string): Promise<unknown> {
 }
 
 export async function POST(request: Request) {
-  let body: { question?: unknown };
+  let body: {
+    question?: unknown;
+    region?: unknown;
+    method?: unknown;
+    time?: unknown;
+  };
   try {
     body = await request.json();
   } catch {
@@ -39,6 +46,8 @@ export async function POST(request: Request) {
 
   let stats: unknown;
   let walkthrough: unknown;
+  let disagreement: unknown = {};
+  let parcels: { parcels?: Record<string, unknown> } | null = null;
   try {
     [stats, walkthrough] = await Promise.all([
       readPublicJson("seizure-stats.json"),
@@ -51,18 +60,68 @@ export async function POST(request: Request) {
     );
   }
 
-  const messages = buildAskMessages(question, stats, walkthrough, LIMITATIONS);
+  try {
+    disagreement = await readPublicJson("brain/disagreement.json");
+  } catch {
+    disagreement = {};
+  }
+
+  try {
+    parcels = (await readPublicJson("brain/parcels.json")) as {
+      parcels?: Record<string, unknown>;
+    };
+  } catch {
+    parcels = null;
+  }
+
+  const regionName = typeof body.region === "string" ? body.region : undefined;
+  const method = typeof body.method === "string" ? body.method : undefined;
+  const time = typeof body.time === "number" ? body.time : undefined;
+  const parcel =
+    regionName && parcels?.parcels ? parcels.parcels[regionName] ?? null : null;
+
+  const messages = buildAskMessages(
+    question,
+    stats,
+    walkthrough,
+    LIMITATIONS,
+    {
+      region: regionName,
+      method,
+      time,
+      parcel,
+    },
+    disagreement
+  );
   const response = await fetch(OPENAI_CHAT_COMPLETIONS_URL, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ model: ASTRA_MODEL, messages }),
+    body: JSON.stringify({
+      model: ASK_MODEL,
+      messages,
+      response_format: { type: "json_object" },
+    }),
   });
 
   if (!response.ok) {
-    return NextResponse.json({ error: "Astra is unavailable." }, { status: 502 });
+    let detail = `OpenAI HTTP ${response.status} for model ${ASK_MODEL}`;
+    try {
+      const errBody = (await response.json()) as {
+        error?: { message?: string; code?: string };
+      };
+      if (errBody.error?.message) {
+        detail = errBody.error.message;
+      }
+    } catch {
+      // keep fallback detail
+    }
+    return NextResponse.json(
+      { error: "Live Q&A is unavailable.", detail },
+      { status: 502 }
+    );
   }
 
   const payload = (await response.json()) as {
@@ -70,8 +129,15 @@ export async function POST(request: Request) {
   };
   const answer = payload.choices?.[0]?.message?.content;
   if (typeof answer !== "string" || !answer.trim()) {
-    return NextResponse.json({ error: "Astra returned an empty answer." }, { status: 502 });
+    return NextResponse.json({ error: "Live Q&A returned an empty answer." }, { status: 502 });
   }
 
-  return NextResponse.json({ answer });
+  const action = parseAskAnswer(answer);
+  return NextResponse.json({
+    answer: action.text,
+    seek_time: action.seek_time ?? null,
+    method: action.method ?? null,
+    highlight: action.highlight ?? null,
+    split: action.split ?? null,
+  });
 }

@@ -5,8 +5,15 @@ import { FormEvent, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SceneAction, parseAskAnswer } from "@/lib/guide";
 
-export function AskBox({ liveQa }: { liveQa: boolean }) {
+export function AskBox({
+  liveQa,
+  onAction,
+}: {
+  liveQa: boolean;
+  onAction?: (action: SceneAction) => void;
+}) {
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -23,12 +30,36 @@ export function AskBox({ liveQa }: { liveQa: boolean }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question }),
       });
-      const payload = (await response.json()) as { answer?: string; error?: string };
+      const payload = (await response.json()) as {
+        answer?: string;
+        error?: string;
+        detail?: string;
+        seek_time?: number | null;
+        method?: SceneAction["method"];
+        highlight?: string[] | null;
+        split?: boolean | null;
+      };
       if (!response.ok) {
-        setError(payload.error ?? "The question could not be answered.");
+        const message = payload.detail
+          ? `${payload.error ?? "The question could not be answered."} (${payload.detail})`
+          : payload.error ?? "The question could not be answered.";
+        setError(message);
         return;
       }
-      setAnswer(payload.answer ?? "");
+      const action = parseAskAnswer(
+        JSON.stringify({
+          text: payload.answer ?? "",
+          seek_time: payload.seek_time,
+          method: payload.method,
+          highlight: payload.highlight,
+          split: payload.split,
+        })
+      );
+      if (!action.text && payload.answer) {
+        action.text = payload.answer;
+      }
+      setAnswer(action.text);
+      onAction?.(action);
     } catch {
       setError("The question could not be answered.");
     } finally {
@@ -40,7 +71,7 @@ export function AskBox({ liveQa }: { liveQa: boolean }) {
     return (
       <p className="text-sm leading-relaxed text-muted-foreground">
         Live Q&A is off because OPENAI_API_KEY is not set on the server. The
-        walkthrough above is still the grounded guide for this recording.
+        computed captions on the cortex still come from the disagreement JSON.
       </p>
     );
   }
@@ -69,7 +100,7 @@ export function AskBox({ liveQa }: { liveQa: boolean }) {
       ) : null}
       {answer ? (
         <div className="space-y-2">
-          <Badge variant="outline">Astra, from stats JSON</Badge>
+          <Badge variant="outline">From stats and disagreement JSON</Badge>
           <p className="text-sm leading-relaxed text-foreground">{answer}</p>
         </div>
       ) : null}

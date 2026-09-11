@@ -1,5 +1,26 @@
 {
-  "status": "error",
-  "captions": [],
-  "message": "HTTP Error 429: Too Many Requests"
+  "status": "ok",
+  "source": "deterministic",
+  "captions": [
+    {
+      "t": 2996.0,
+      "method": "dspm",
+      "text": "Computed captions for chb01_03.edf. They come from parcel numbers, not from a language model."
+    },
+    {
+      "t": 3031.54,
+      "method": "dspm",
+      "text": "dSPM peaks in inferiortemporal-rh at 3031.54 s."
+    },
+    {
+      "t": 3031.54,
+      "method": "sloreta",
+      "text": "sLORETA peaks in parstriangularis-rh at 3031.54 s."
+    },
+    {
+      "t": 3031.54,
+      "method": "dspm",
+      "text": "The inverses disagree (distant). That is ambiguity on a template inverse, not a known focus."
+    }
+  ]
 }

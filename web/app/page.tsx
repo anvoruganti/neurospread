@@ -1,19 +1,33 @@
 import { existsSync, readdirSync, readFileSync } from "fs";
 import path from "path";
 import Image from "next/image";
+import nextDynamic from "next/dynamic";
 
-import { AskBox } from "@/components/ask-box";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { LIMITATIONS } from "@/lib/ask";
 
 export const dynamic = "force-dynamic";
 
+const BrainViewer = nextDynamic(
+  () => import("@/components/brain-viewer").then((mod) => mod.BrainViewer),
+  {
+    ssr: false,
+    loading: () => (
+      <Card>
+        <CardContent className="py-8">
+          <p className="text-sm text-muted-foreground">Loading interactive cortex…</p>
+        </CardContent>
+      </Card>
+    ),
+  }
+);
+
 const DSPM_MOVIE = "seizure-dspm.mp4";
 const SLORETA_MOVIE = "seizure-sloreta.mp4";
 
 type Caption = { t?: number; method?: string; text?: string };
-type Walkthrough = { status?: string; captions?: Caption[]; message?: string };
+type Walkthrough = { status?: string; source?: string; captions?: Caption[]; message?: string };
 
 function publicPath(...parts: string[]) {
   return path.join(process.cwd(), "public", ...parts);
@@ -48,9 +62,10 @@ export default function Home() {
   const walkthrough = loadWalkthrough();
   const captions = walkthrough.captions ?? [];
   const liveQa = Boolean(process.env.OPENAI_API_KEY);
+  const hasBrain = publicExists("brain", "mesh.json");
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-4xl flex-col gap-20 px-6 py-16 sm:px-10">
+    <main className="mx-auto flex min-h-screen max-w-5xl flex-col gap-20 px-6 py-16 sm:px-10">
       <section className="space-y-6">
         <div className="space-y-3">
           <Badge variant="outline">Public CHB-MIT recording</Badge>
@@ -58,38 +73,19 @@ export default function Home() {
             NeuroSpread
           </h1>
           <p className="max-w-2xl text-base leading-relaxed text-muted-foreground">
-            I computed seizure-spread movies from one de-identified scalp EEG
-            file. The frames come from dSPM and sLORETA on a template brain.
-            This is a proof of concept, not a clinical tool.
+            I computed seizure spread on a template brain from one de-identified
+            scalp EEG file. The interactive cortex is colored by dSPM and
+            sLORETA source estimates. Captions and overlays come from those
+            numbers. They do not draw the map. This is a proof of concept, not a
+            clinical tool.
           </p>
         </div>
-        <Card>
-          <CardHeader>
-            <CardTitle>dSPM on the annotated seizure</CardTitle>
-            <CardDescription>
-              Public CHB-MIT seizure, template brain, not a patient-specific map.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {hasDspm ? (
-              <video
-                className="w-full bg-black"
-                src={`/${DSPM_MOVIE}`}
-                autoPlay
-                muted
-                loop
-                playsInline
-                controls
-              />
-            ) : (
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                The dSPM movie is not here yet. From the repo root, run
-                python -m pipeline to compute it from the source estimate.
-                I will not put a generated brain in its place.
-              </p>
-            )}
-          </CardContent>
-        </Card>
+        <BrainViewer liveQa={liveQa} />
+        {!hasBrain ? (
+          <p className="text-sm text-muted-foreground">
+            Public CHB-MIT seizure, template brain, not a patient-specific map.
+          </p>
+        ) : null}
       </section>
 
       <section className="space-y-6">
@@ -103,17 +99,34 @@ export default function Home() {
         <p className="text-base leading-relaxed text-muted-foreground">
           There is no patient MRI, so the forward model uses fsaverage. The
           same window and head model are solved twice, as dSPM and as sLORETA.
-          Each movie is a sequence of screenshots of that source estimate. No
-          image-generation model is used.
+          The 3D viewer and the movies below are both screenshots or meshes of
+          that source estimate. No image-generation model is used.
         </p>
         <Card>
           <CardHeader>
-            <CardTitle>sLORETA, same window</CardTitle>
+            <CardTitle>Computed screenshot movies</CardTitle>
             <CardDescription>
-              A second inverse method, not a second AI model.
+              Offline MNE Brain screenshots for dSPM and sLORETA. Same data as
+              the interactive cortex, fixed camera.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            {hasDspm ? (
+              <video
+                className="w-full bg-black"
+                src={`/${DSPM_MOVIE}`}
+                autoPlay
+                muted
+                loop
+                playsInline
+                controls
+              />
+            ) : (
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                The dSPM movie is not here yet. Run python -m pipeline to
+                compute it from the source estimate.
+              </p>
+            )}
             {hasSloreta ? (
               <video
                 className="w-full bg-black"
@@ -146,40 +159,37 @@ export default function Home() {
       </section>
 
       <section className="space-y-6">
-        <h2 className="text-2xl font-medium tracking-tight">Astra guide</h2>
+        <h2 className="text-2xl font-medium tracking-tight">Disagreement probe</h2>
         <p className="text-base leading-relaxed text-muted-foreground">
-          GPT-6 Astra writes from the computed stats JSON. It does not see
-          the video, and it does not draw the map. This is not a diagnosis.
+          Captions on the cortex are computed from parcel JSON, not from a
+          language model. Live Q&A, when the key is set, uses a cheap Chat
+          Completions model and can seek or highlight those same parcels. Astra
+          is a study subject for the disagreement prompt, not the runtime that
+          draws overlays.
         </p>
         <Card>
           <CardHeader>
-            <CardTitle>Walkthrough</CardTitle>
+            <CardTitle>What this week can claim</CardTitle>
             <CardDescription>
-              Written by GPT-6 Astra from computed stats, not from the video.
+              Seven chb01 seizures, author-scored, no ground truth for which
+              inverse is right.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {captions.length > 0 ? (
-              <ol className="space-y-3">
-                {captions.map((caption, index) => (
-                  <li key={`${caption.t}-${index}`} className="text-sm leading-relaxed">
-                    <span className="text-accent">
-                      {typeof caption.t === "number" ? `${caption.t}s` : "time unknown"}
-                    </span>
-                    {caption.method ? ` · ${caption.method}` : ""}
-                    {caption.text ? ` · ${caption.text}` : ""}
-                  </li>
-                ))}
-              </ol>
-            ) : (
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              dSPM and sLORETA can peak in different parcels on the same window.
+              That is ambiguity on a template inverse. The probe asks whether
+              models admit that or invent a clean story. The protocol, rubric,
+              and frozen prompt live in the study/ folder. Other CHB-MIT
+              subjects and an expert rater are later work. The title has to
+              match that evidence.
+            </p>
+            {walkthrough.source === "deterministic" && captions.length > 0 ? (
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Astra did not return captions for this run
-                {walkthrough.message ? ` (${walkthrough.message})` : ""}.
-                The movies still come from the source estimates. Rerun the
-                pipeline with OPENAI_API_KEY set to fill this guide.
+                Hero-case captions are also listed on the cortex above. They
+                seek the playhead.
               </p>
-            )}
-            <AskBox liveQa={liveQa} />
+            ) : null}
           </CardContent>
         </Card>
       </section>
@@ -210,7 +220,9 @@ export default function Home() {
             <p className="text-base leading-relaxed text-muted-foreground">
               {LIMITATIONS} The head model is a template. The bipolar-to-10-20
               channel mapping is an approximation. Volume conduction leaves
-              centimeters of uncertainty, not millimeters.
+              centimeters of uncertainty, not millimeters. The interactive
+              cortex is fsaverage colored by the source estimate, not a
+              patient-specific anatomy and not an Astra-generated picture.
             </p>
           </CardContent>
         </Card>

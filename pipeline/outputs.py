@@ -28,3 +28,9 @@ def copy_derived_outputs(src_dir: Path, web_public: Path) -> None:
         if dest_stills.exists():
             shutil.rmtree(dest_stills)
         shutil.copytree(stills, dest_stills)
+    brain = src_dir / "brain"
+    if brain.exists():
+        dest_brain = web_public / "brain"
+        if dest_brain.exists():
+            shutil.rmtree(dest_brain)
+        shutil.copytree(brain, dest_brain)

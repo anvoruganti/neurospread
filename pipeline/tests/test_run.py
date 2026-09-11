@@ -59,12 +59,15 @@ def test_run_pipeline_writes_stats_and_copies_movies(tmp_path: Path):
     assert (public / "seizure-dspm.mp4").exists()
     assert (public / "seizure-stats.json").exists()
     assert result["walkthrough"]["status"] == "ok"
+    assert result["walkthrough"]["source"] == "deterministic"
+    assert result["disagreement"]["source"] == "deterministic"
 
 
-def test_run_pipeline_stops_when_interactive_and_key_missing(tmp_path: Path):
+def test_run_pipeline_does_not_need_an_api_key_for_deterministic_captions(tmp_path: Path):
     data_dir = tmp_path / "data"
     data_dir.mkdir()
     (data_dir / "chb01_03.edf").write_bytes(b"edf")
+    public = tmp_path / "public"
 
     def localize(raw_path, window, filters, jobs):
         stc = SimpleNamespace(data=True)
@@ -74,22 +77,21 @@ def test_run_pipeline_stops_when_interactive_and_key_missing(tmp_path: Path):
         dest.mkdir(parents=True, exist_ok=True)
         (dest / f"seizure-{method}.mp4").write_bytes(b"movie")
 
-    from pipeline.astra import MissingAPIKeyError
-
-    with pytest.raises(MissingAPIKeyError):
-        run_pipeline(
-            RunConfig(
-                data_dir=data_dir,
-                out_dir=tmp_path / "out",
-                web_public=tmp_path / "public",
-                interactive=True,
-                api_key=None,
-            ),
-            fetch=lambda *a, **k: None,
-            localize=localize,
-            render_stc=render_stc,
-            complete=lambda *a, **k: {},
-        )
+    result = run_pipeline(
+        RunConfig(
+            data_dir=data_dir,
+            out_dir=tmp_path / "out",
+            web_public=public,
+            interactive=True,
+            api_key=None,
+        ),
+        fetch=lambda *a, **k: None,
+        localize=localize,
+        render_stc=render_stc,
+        complete=lambda *a, **k: {},
+    )
+    assert result["walkthrough"]["source"] == "deterministic"
+    assert (public / "seizure-dspm.mp4").exists()
 
 
 def test_complete_posts_chat_completion_with_api_key(monkeypatch):
@@ -172,23 +174,7 @@ def test_run_pipeline_rejects_missing_localization_method(tmp_path: Path):
         )
 
 
-@pytest.mark.parametrize(
-    ("api_key", "complete", "expected_status"),
-    [
-        (None, lambda *a, **k: {}, "skipped"),
-        (
-            "test-api-key",
-            lambda *a, **k: (_ for _ in ()).throw(RuntimeError("unavailable")),
-            "error",
-        ),
-    ],
-)
-def test_run_pipeline_copies_movies_after_degraded_walkthrough(
-    tmp_path: Path,
-    api_key,
-    complete,
-    expected_status,
-):
+def test_run_pipeline_copies_movies_with_deterministic_captions(tmp_path: Path):
     data_dir = tmp_path / "data"
     data_dir.mkdir()
     (data_dir / "chb01_03.edf").write_bytes(b"edf")
@@ -207,14 +193,41 @@ def test_run_pipeline_copies_movies_after_degraded_walkthrough(
             out_dir=tmp_path / "out",
             web_public=public,
             interactive=False,
-            api_key=api_key,
+            api_key=None,
         ),
         fetch=lambda *a, **k: None,
         localize=localize,
         render_stc=render_stc,
-        complete=complete,
+        complete=lambda *a, **k: {},
     )
 
-    assert result["walkthrough"]["status"] == expected_status
+    assert result["walkthrough"]["status"] == "ok"
+    assert result["walkthrough"]["source"] == "deterministic"
     assert (public / "seizure-dspm.mp4").exists()
     assert (public / "seizure-sloreta.mp4").exists()
+    assert (tmp_path / "out" / "cases" / "chb01_03" / "disagreement.json").exists()
+
+
+def test_run_pipeline_can_skip_movies_and_publish(tmp_path: Path):
+    data_dir = tmp_path / "data"
+    data_dir.mkdir()
+    (data_dir / "chb01_03.edf").write_bytes(b"edf")
+
+    result = run_pipeline(
+        RunConfig(
+            data_dir=data_dir,
+            out_dir=tmp_path / "out",
+            web_public=tmp_path / "public",
+            interactive=False,
+            api_key=None,
+            skip_render=True,
+            skip_publish=True,
+        ),
+        fetch=lambda *a, **k: None,
+        localize=lambda *a, **k: {"dspm": SimpleNamespace(data=True), "sloreta": SimpleNamespace(data=True)},
+        render_stc=lambda *a, **k: (_ for _ in ()).throw(AssertionError("should not render")),
+        complete=lambda *a, **k: {},
+    )
+    assert result["disagreement"]["source"] == "deterministic"
+    assert not (tmp_path / "out" / "seizure-dspm.mp4").exists()
+    assert not (tmp_path / "public" / "seizure-dspm.mp4").exists()
