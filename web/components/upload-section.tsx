@@ -5,7 +5,6 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 
 type UploadSectionProps = {
   onReady: (caseId: string) => void;
@@ -15,8 +14,6 @@ type UploadStatus = "idle" | "uploading" | "processing" | "ready" | "failed";
 
 export function UploadSection({ onReady }: UploadSectionProps) {
   const [file, setFile] = useState<File | null>(null);
-  const [tmin, setTmin] = useState("0");
-  const [tmax, setTmax] = useState("40");
   const [status, setStatus] = useState<UploadStatus>("idle");
   const [message, setMessage] = useState<string | null>(null);
   const [uploadId, setUploadId] = useState<string | null>(null);
@@ -28,15 +25,32 @@ export function UploadSection({ onReady }: UploadSectionProps) {
       try {
         const res = await fetch(`/api/upload/${uploadId}`);
         if (!res.ok) return;
-        const payload = (await res.json()) as { status?: string; caseId?: string; error?: string };
+        const payload = (await res.json()) as {
+          status?: string;
+          caseId?: string;
+          error?: string;
+          message?: string;
+          window?: { tmin: number; tmax: number };
+        };
+        if (payload.message && status === "processing") {
+          setMessage(payload.message);
+        }
         if (payload.status === "ready" && payload.caseId) {
           setStatus("ready");
-          setMessage("Your recording is ready in the viewer below.");
+          const win = payload.window;
+          setMessage(
+            win
+              ? `Your map is ready. We focused on the most active ${Math.round(win.tmax - win.tmin)} seconds of the recording.`
+              : "Your map is ready in the viewer below."
+          );
           onReady(payload.caseId);
           window.clearInterval(id);
         } else if (payload.status === "failed") {
           setStatus("failed");
-          setMessage(payload.error ?? "Processing failed. Check the seizure window and file format.");
+          setMessage(
+            payload.error ??
+              "We could not process this file. Try a longer recording (3+ minutes) or a hospital-exported scalp EEG."
+          );
           window.clearInterval(id);
         }
       } catch {
@@ -49,15 +63,13 @@ export function UploadSection({ onReady }: UploadSectionProps) {
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     if (!file) {
-      setMessage("Choose a scalp EEG file (.edf) first.");
+      setMessage("Choose your hospital EEG file (.edf) first.");
       return;
     }
     setStatus("uploading");
     setMessage(null);
     const body = new FormData();
     body.append("file", file);
-    body.append("tmin", tmin);
-    body.append("tmax", tmax);
     try {
       const response = await fetch("/api/upload", { method: "POST", body });
       const payload = (await response.json()) as {
@@ -71,15 +83,10 @@ export function UploadSection({ onReady }: UploadSectionProps) {
         return;
       }
       setUploadId(payload.uploadId);
-      setStatus(payload.processing ? "processing" : "ready");
-      if (payload.processing) {
-        setMessage(
-          "We are running dSPM and sLORETA on your file. This can take several minutes — keep this tab open."
-        );
-      } else if (payload.uploadId) {
-        onReady(payload.uploadId);
-        setMessage("Upload received.");
-      }
+      setStatus("processing");
+      setMessage(
+        "Upload received. We are finding where the seizure activity is strongest and building your 3D map — this can take several minutes."
+      );
     } catch {
       setStatus("failed");
       setMessage("Network error while uploading.");
@@ -87,28 +94,32 @@ export function UploadSection({ onReady }: UploadSectionProps) {
   }
 
   return (
-    <Card className="border-border/60 bg-gradient-to-br from-slate-900/80 to-slate-950/90" id="upload">
+    <Card
+      className="relative overflow-hidden border-cyan-500/20 bg-[#060a14]/90 shadow-[inset_0_1px_0_rgba(56,189,248,0.12)]"
+      id="upload"
+    >
+      <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-orange-500/10 blur-3xl" />
       <CardHeader>
         <div className="flex flex-wrap items-center gap-2">
-          <CardTitle className="text-lg">Use your own scalp EEG</CardTitle>
+          <CardTitle className="text-lg">Bring your own EEG file</CardTitle>
           <Badge variant="outline">.edf</Badge>
         </div>
         <CardDescription>
-          Upload a de-identified recording and set the seizure window (seconds). We map it to a
-          standard montage, run the same dSPM / sLORETA pipeline, and open it in the 3D viewer. Not
-          for diagnosis — research and education only.
+          No timestamps to enter. Upload the file from the hospital system — we find the most
+          active seizure segment, map it on a standard brain, and show how activity spreads. For
+          learning only; not medical advice.
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form className="grid gap-4 md:grid-cols-[1fr_auto_auto_auto]" onSubmit={onSubmit}>
+        <form className="flex flex-col gap-4 sm:flex-row sm:items-stretch" onSubmit={onSubmit}>
           <div
-            className="flex cursor-pointer flex-col justify-center rounded-xl border border-dashed border-border/80 bg-background/40 px-4 py-6 text-sm text-muted-foreground"
+            className="flex flex-1 cursor-pointer flex-col justify-center rounded-xl border border-dashed border-cyan-500/30 bg-black/30 px-4 py-8 text-sm text-muted-foreground transition hover:border-cyan-400/50"
             onClick={() => inputRef.current?.click()}
             onKeyDown={(e) => e.key === "Enter" && inputRef.current?.click()}
             role="button"
             tabIndex={0}
           >
-            {file ? file.name : "Drop or click to select an EDF file"}
+            {file ? file.name : "Tap to choose your EEG file"}
             <input
               ref={inputRef}
               type="file"
@@ -117,24 +128,16 @@ export function UploadSection({ onReady }: UploadSectionProps) {
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             />
           </div>
-          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-            Window start (s)
-            <Input value={tmin} onChange={(e) => setTmin(e.target.value)} inputMode="decimal" />
-          </label>
-          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-            Window end (s)
-            <Input value={tmax} onChange={(e) => setTmax(e.target.value)} inputMode="decimal" />
-          </label>
           <Button
             type="submit"
-            className="h-full min-h-[44px] bg-teal-500 text-slate-950 hover:bg-teal-400"
+            className="min-h-[52px] shrink-0 bg-gradient-to-r from-cyan-400 to-sky-500 px-8 text-slate-950 hover:from-cyan-300 hover:to-sky-400"
             disabled={status === "uploading" || status === "processing"}
           >
-            {status === "processing" ? "Processing…" : "Visualize"}
+            {status === "processing" ? "Building map…" : "Show my seizure map"}
           </Button>
         </form>
         {message ? (
-          <p className="mt-4 text-sm text-muted-foreground" role="status">
+          <p className="mt-4 text-sm leading-relaxed text-muted-foreground" role="status">
             {message}
           </p>
         ) : null}

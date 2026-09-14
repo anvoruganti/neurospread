@@ -1,7 +1,9 @@
 import { existsSync, readFileSync } from "fs";
+import Image from "next/image";
 import path from "path";
 
 import { CaseStudio } from "@/components/case-studio";
+import { NeuralBackdrop } from "@/components/neural-backdrop";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
@@ -29,56 +31,78 @@ export default function Home() {
 
   return (
     <>
+      <NeuralBackdrop />
       <SiteHeader />
-      <main className="relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(45,212,191,0.18),transparent)]" />
-        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)]" />
-
-        <section className="relative mx-auto max-w-6xl px-6 pb-8 pt-16 sm:px-10 sm:pt-24">
-          <div className="flex flex-wrap gap-2">
-            <Badge className="bg-teal-500/15 text-teal-100">Seizure source imaging</Badge>
-            <Badge variant="outline">CHB-MIT · PhysioNet</Badge>
-            <Badge variant="outline">{readyCount} live examples</Badge>
-          </div>
-          <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight text-foreground sm:text-6xl sm:leading-[1.05]">
-            See how a seizure moves across the brain
-          </h1>
-          <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
-            NeuroSpread turns scalp EEG into an interactive 3D map. Compare{" "}
-            <span className="text-foreground">dSPM</span> and{" "}
-            <span className="text-foreground">sLORETA</span>, watch spread over time, click any
-            region to ask what it means, and download a draft report — built for epileptologists,
-            trainees, and families learning how source imaging works.
-          </p>
-          <div className="mt-10 flex flex-wrap gap-4">
-            <a
-              href="#explore"
-              className="inline-flex items-center justify-center rounded-full bg-teal-400 px-6 py-3 text-sm font-medium text-slate-950 transition hover:bg-teal-300"
-            >
-              Browse example seizures
-            </a>
-            <a
-              href="#upload"
-              className="inline-flex items-center justify-center rounded-full border border-border/80 bg-card/50 px-6 py-3 text-sm font-medium text-foreground backdrop-blur transition hover:border-teal-500/40"
-            >
-              Upload your EEG
-            </a>
+      <main className="relative">
+        <section className="relative mx-auto max-w-6xl px-6 pb-10 pt-12 sm:px-10 sm:pt-20">
+          <div className="grid items-center gap-12 lg:grid-cols-[1fr_minmax(200px,280px)]">
+            <div>
+              <div className="flex flex-wrap gap-2">
+                <Badge className="border-cyan-500/30 bg-cyan-500/10 text-cyan-100">
+                  For families & care teams
+                </Badge>
+                <Badge variant="outline" className="border-orange-400/20 text-orange-100/80">
+                  {readyCount} real seizure examples
+                </Badge>
+              </div>
+              <h1 className="mt-6 max-w-2xl text-4xl font-semibold leading-[1.08] tracking-tight sm:text-5xl">
+                Watch where a seizure travels on the brain
+              </h1>
+              <p className="mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground">
+                Upload a hospital EEG or try a sample. We turn wires on the scalp into a 3D picture
+                you can rotate, slide through time, and tap to ask simple questions — plus a written
+                summary you can share with your doctor.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-3 text-sm text-muted-foreground">
+                <span className="rounded-full border border-cyan-500/25 px-3 py-1">
+                  <strong className="text-cyan-100">Sharp peaks</strong> — strongest hot spots
+                </span>
+                <span className="rounded-full border border-orange-400/25 px-3 py-1">
+                  <strong className="text-orange-100">Smooth spread</strong> — wider activity pattern
+                </span>
+              </div>
+              <div className="mt-9 flex flex-wrap gap-4">
+                <a
+                  href="#explore"
+                  className="inline-flex rounded-full bg-gradient-to-r from-cyan-400 to-sky-500 px-6 py-3 text-sm font-medium text-slate-950 shadow-lg shadow-cyan-500/20 transition hover:brightness-110"
+                >
+                  Try a sample seizure
+                </a>
+                <a
+                  href="#upload"
+                  className="inline-flex rounded-full border border-cyan-500/35 bg-black/40 px-6 py-3 text-sm font-medium text-cyan-50 backdrop-blur transition hover:border-cyan-400/60"
+                >
+                  Upload our EEG file
+                </a>
+              </div>
+            </div>
+            <div className="relative mx-auto hidden lg:block">
+              <div className="absolute inset-0 rounded-full bg-cyan-500/20 blur-3xl" />
+              <Image
+                src="/neurospread-logo.png"
+                alt=""
+                width={280}
+                height={280}
+                className="relative rounded-2xl object-cover opacity-95 ring-1 ring-cyan-400/20"
+                priority
+              />
+            </div>
           </div>
         </section>
 
-        <section className="relative mx-auto max-w-6xl px-6 py-16 sm:px-10">
-          <div className="grid gap-6 md:grid-cols-3">
+        <section className="relative mx-auto max-w-6xl px-6 py-12 sm:px-10">
+          <div className="grid gap-5 md:grid-cols-3">
             <Feature
-              title="Propagation, not a snapshot"
-              body="Scrub time and watch estimated activity spread on a template cortex — clearer than a static trace for teaching and rounds."
+              title="No jargon required"
+              body="Two map styles — sharp vs smooth — help you see the same seizure in two ways without learning lab acronyms."
             />
             <Feature
-              title="Two inverses, one recording"
-              body="dSPM and sLORETA use the same data. When they disagree, the tool says so — that ambiguity is the point."
+              title="Follow the wave"
+              body="Move the time slider to see how activity appears to move across the brain surface."
             />
             <Feature
-              title="Draft reports faster"
-              body="Export a structured localization note from computed peaks and spread order to speed up documentation (not a substitute for clinical read)."
+              title="Questions welcome"
+              body="Tap a region and ask what it means in everyday language. Export a draft summary for your neurology visit."
             />
           </div>
         </section>
@@ -87,13 +111,13 @@ export default function Home() {
           <CaseStudio manifest={manifest} liveQa={liveQa} heroHasMovie={heroHasMovie} />
         </section>
 
-        <section className="border-t border-border/60 bg-card/30">
-          <div className="mx-auto max-w-6xl px-6 py-16 sm:px-10">
-            <h2 className="text-2xl font-semibold tracking-tight">Built for trust</h2>
-            <p className="mt-4 max-w-3xl text-muted-foreground leading-relaxed">
-              Public de-identified data and a standard head model (fsaverage). No patient MRI. No
-              image-generation AI on the brain map — colors come from MNE source estimates. Not
-              FDA-cleared; not for diagnosis or surgical planning without your own validation.
+        <section className="border-t border-cyan-500/10 bg-black/40">
+          <div className="mx-auto max-w-6xl px-6 py-14 sm:px-10">
+            <h2 className="text-xl font-semibold">Please read this</h2>
+            <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
+              NeuroSpread is an educational viewer on public or uploaded scalp EEG. It uses a generic
+              brain shape, not your loved one&apos;s MRI. It does not diagnose epilepsy, pick surgery
+              sites, or replace a neurologist. Always rely on your care team for treatment decisions.
             </p>
           </div>
         </section>
@@ -105,8 +129,8 @@ export default function Home() {
 
 function Feature({ title, body }: { title: string; body: string }) {
   return (
-    <div className="rounded-2xl border border-border/60 bg-card/50 p-6 backdrop-blur">
-      <h3 className="text-base font-medium text-foreground">{title}</h3>
+    <div className="rounded-2xl border border-cyan-500/15 bg-[#060a14]/80 p-6 backdrop-blur-sm">
+      <h3 className="text-base font-medium text-cyan-50">{title}</h3>
       <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{body}</p>
     </div>
   );

@@ -86,7 +86,7 @@ export function AskBox({
           id="ask-question"
           value={question}
           onChange={(event) => setQuestion(event.target.value)}
-          placeholder="When does dSPM peak in this recording?"
+          placeholder="Where is the strongest activity right now?"
           disabled={pending}
         />
         <Button type="submit" disabled={pending || !question.trim()}>

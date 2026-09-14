@@ -10,19 +10,12 @@ const MAX_BYTES = 120 * 1024 * 1024;
 export async function POST(request: Request) {
   const form = await request.formData();
   const file = form.get("file");
-  const tminRaw = String(form.get("tmin") ?? "0");
-  const tmaxRaw = String(form.get("tmax") ?? "40");
-  const tmin = Number(tminRaw);
-  const tmax = Number(tmaxRaw);
 
   if (!(file instanceof File)) {
     return Response.json({ error: "Missing EEG file." }, { status: 400 });
   }
   if (!file.name.toLowerCase().endsWith(".edf")) {
     return Response.json({ error: "Only .edf scalp EEG files are supported." }, { status: 400 });
-  }
-  if (!Number.isFinite(tmin) || !Number.isFinite(tmax) || tmax <= tmin) {
-    return Response.json({ error: "Set a valid seizure window (end must be after start)." }, { status: 400 });
   }
   if (file.size > MAX_BYTES) {
     return Response.json({ error: "File is too large (120 MB max)." }, { status: 400 });
@@ -40,27 +33,18 @@ export async function POST(request: Request) {
   await writeFile(dest, buffer);
   await writeFile(
     path.join(statusDir, `${uploadId}.json`),
-    JSON.stringify({ status: "processing", caseId: uploadId }) + "\n"
+    JSON.stringify({
+      status: "processing",
+      caseId: uploadId,
+      message: "Finding the busiest part of the recording, then building your 3D map.",
+    }) + "\n"
   );
 
-  const child = spawn(
-    "python3",
-    [
-      "-m",
-      "pipeline.run_upload",
-      dest,
-      uploadId,
-      "--tmin",
-      String(tmin),
-      "--tmax",
-      String(tmax),
-    ],
-    {
-      cwd: repoRoot,
-      detached: true,
-      stdio: "ignore",
-    }
-  );
+  const child = spawn("python3", ["-m", "pipeline.run_upload", dest, uploadId], {
+    cwd: repoRoot,
+    detached: true,
+    stdio: "ignore",
+  });
   child.unref();
 
   return Response.json({ uploadId, processing: true });

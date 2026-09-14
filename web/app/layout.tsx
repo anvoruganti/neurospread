@@ -31,18 +31,18 @@ export const metadata: Metadata = {
     template: "%s · NeuroSpread",
   },
   description:
-    "Interactive dSPM and sLORETA seizure maps from scalp EEG. Explore CHB-MIT examples, upload your EDF, click brain regions to learn more, and export draft localization notes for epileptologists.",
+    "See seizure spread on a 3D brain from scalp EEG. Try hospital-style examples or upload your file — no timestamps needed. Plain-language region Q&A and downloadable summaries.",
   keywords: [
     "EEG",
     "epilepsy",
     "seizure",
-    "source localization",
-    "dSPM",
-    "sLORETA",
+    "seizure map",
+    "family caregiver",
     "CHB-MIT",
-    "epileptologist",
     "brain mapping",
+    "epileptologist",
   ],
+  icons: { icon: "/neurospread-logo.png", apple: "/neurospread-logo.png" },
   openGraph: {
     type: "website",
     locale: "en_US",
@@ -50,7 +50,7 @@ export const metadata: Metadata = {
     siteName: "NeuroSpread",
     title: "NeuroSpread — See seizure spread on the cortex",
     description:
-      "Upload or explore public EEG seizures. Compare dSPM vs sLORETA, watch propagation, ask questions about any region, download draft reports.",
+      "Upload or explore sample EEG seizures. Sharp vs smooth brain maps, time slider, tap-to-ask, download a summary for your doctor.",
   },
   twitter: {
     card: "summary_large_image",

@@ -37,12 +37,19 @@ import {
   propagationPath,
 } from "@/lib/guide";
 import { caseBasePath } from "@/lib/cases";
+import { methodLabel } from "@/lib/inverse-labels";
 import { SeizureStats, downloadReport } from "@/lib/report";
 
 type BrainViewerProps = {
   liveQa: boolean;
   caseId: string;
 };
+
+function friendlyCaption(text: string): string {
+  return text
+    .replace(/\bdSPM\b/g, methodLabel("dspm"))
+    .replace(/\bsLORETA\b/g, methodLabel("sloreta"));
+}
 
 type LoadedBrain = {
   mesh: BrainMesh;
@@ -331,11 +338,9 @@ export function BrainViewer({ liveQa, caseId }: BrainViewerProps) {
   const [error, setError] = useState<string | null>(null);
   const [method, setMethod] = useState<MethodName>("dspm");
   const [timeIndex, setTimeIndex] = useState(0);
-  const [playing, setPlaying] = useState(false);
   const [hover, setHover] = useState<string | null>(null);
   const [selection, setSelection] = useState<RegionSelection | null>(null);
   const [split, setSplit] = useState(false);
-  const [showOverlay, setShowOverlay] = useState(true);
   const [focusPath, setFocusPath] = useState(true);
   const [highlights, setHighlights] = useState<string[]>([]);
   const [stats, setStats] = useState<SeizureStats | null>(null);
@@ -398,14 +403,6 @@ export function BrainViewer({ liveQa, caseId }: BrainViewerProps) {
     };
   }, [caseId]);
 
-  useEffect(() => {
-    if (!playing || !data) return;
-    const id = window.setInterval(() => {
-      setTimeIndex((current) => (current + 1) % data.mesh.activity.times.length);
-    }, 200);
-    return () => window.clearInterval(id);
-  }, [playing, data]);
-
   const times = data?.mesh.activity.times ?? [];
   const currentTime = times[timeIndex] ?? 0;
   const parcel = selection ? data?.parcels.parcels[selection.label] : undefined;
@@ -425,11 +422,10 @@ export function BrainViewer({ liveQa, caseId }: BrainViewerProps) {
     [disagreement, pathMethod]
   );
   const pathParcels = path.map((step) => step.parcel);
-  const overlayHighlights = showOverlay && !focusPath ? highlights : pathParcels;
+  const overlayHighlights = focusPath ? pathParcels : highlights;
 
   function applyAction(action: SceneAction) {
     if (typeof action.seek_time === "number" && times.length) {
-      setPlaying(false);
       setTimeIndex(nearestTimeIndex(times, action.seek_time));
     }
     if (action.method) setMethod(action.method);
@@ -461,7 +457,7 @@ export function BrainViewer({ liveQa, caseId }: BrainViewerProps) {
             highlights={overlayHighlights}
             dspmParcel={dspmParcel}
             sloretaParcel={sloretaParcel}
-            showArrow={showOverlay}
+            showArrow={false}
             pathParcels={focusPath ? viewParcels : []}
             startParcel={focusPath ? viewStart : undefined}
             endParcel={focusPath ? viewEnd : undefined}
@@ -489,8 +485,10 @@ export function BrainViewer({ liveQa, caseId }: BrainViewerProps) {
       <CardHeader className="border-b border-border/60 pb-4">
         <CardTitle className="text-lg">3D seizure map</CardTitle>
         <CardDescription>
-          Drag to rotate. Click a brain region to ask what it means. Toggle dSPM,
-          sLORETA, or both. Download an automated draft note for your chart.
+          Drag to turn the brain. Slide time to see spread. Tap a colored area to ask a plain-language
+          question. Switch between <strong className="font-medium text-foreground">Sharp peaks</strong> and{" "}
+          <strong className="font-medium text-foreground">Smooth spread</strong> — two ways to read the
+          same EEG.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -512,7 +510,7 @@ export function BrainViewer({ liveQa, caseId }: BrainViewerProps) {
                   setMethod("dspm");
                 }}
               >
-                dSPM
+                {methodLabel("dspm")}
               </Button>
               <Button
                 type="button"
@@ -523,7 +521,7 @@ export function BrainViewer({ liveQa, caseId }: BrainViewerProps) {
                   setMethod("sloreta");
                 }}
               >
-                sLORETA
+                {methodLabel("sloreta")}
               </Button>
               <Button
                 type="button"
@@ -531,7 +529,7 @@ export function BrainViewer({ liveQa, caseId }: BrainViewerProps) {
                 size="sm"
                 onClick={() => setSplit((value) => !value)}
               >
-                Split
+                Both maps
               </Button>
               <Button
                 type="button"
@@ -539,26 +537,7 @@ export function BrainViewer({ liveQa, caseId }: BrainViewerProps) {
                 size="sm"
                 onClick={() => setFocusPath((value) => !value)}
               >
-                Path
-              </Button>
-              <Button
-                type="button"
-                variant={showOverlay && !focusPath ? "default" : "outline"}
-                size="sm"
-                onClick={() => {
-                  setFocusPath(false);
-                  setShowOverlay((value) => !value);
-                }}
-              >
-                Overlay
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setPlaying((value) => !value)}
-              >
-                {playing ? "Pause" : "Play"}
+                Spread trail
               </Button>
               <Button
                 type="button"
@@ -570,7 +549,7 @@ export function BrainViewer({ liveQa, caseId }: BrainViewerProps) {
                 }}
                 disabled={!disagreement}
               >
-                Download note
+                Download summary
               </Button>
               {hover ? <Badge variant="outline">{hover}</Badge> : null}
               {disagreement?.type ? (
@@ -588,7 +567,6 @@ export function BrainViewer({ liveQa, caseId }: BrainViewerProps) {
                 max={Math.max(times.length - 1, 0)}
                 value={timeIndex}
                 onChange={(event) => {
-                  setPlaying(false);
                   setTimeIndex(Number(event.target.value));
                 }}
               />
@@ -634,7 +612,6 @@ export function BrainViewer({ liveQa, caseId }: BrainViewerProps) {
                           activeStep ? "bg-accent/15 text-foreground" : "text-muted-foreground"
                         }`}
                         onClick={() => {
-                          setPlaying(false);
                           setTimeIndex(nearestTimeIndex(times, step.time));
                           setFocusPath(true);
                         }}
@@ -660,7 +637,6 @@ export function BrainViewer({ liveQa, caseId }: BrainViewerProps) {
                       }`}
                       onClick={() => {
                         if (typeof caption.t !== "number") return;
-                        setPlaying(false);
                         setTimeIndex(nearestTimeIndex(times, caption.t));
                         if (caption.method === "dspm" || caption.method === "sloreta") {
                           setMethod(caption.method);
@@ -671,8 +647,10 @@ export function BrainViewer({ liveQa, caseId }: BrainViewerProps) {
                       <span className="text-accent">
                         {typeof caption.t === "number" ? `${caption.t.toFixed(0)}s` : "time unknown"}
                       </span>
-                      {caption.method ? ` · ${caption.method}` : ""}
-                      {caption.text ? ` · ${caption.text}` : ""}
+                      {caption.method === "dspm" || caption.method === "sloreta"
+                        ? ` · ${methodLabel(caption.method)}`
+                        : ""}
+                      {caption.text ? ` · ${friendlyCaption(caption.text)}` : ""}
                     </button>
                   </li>
                 ))}

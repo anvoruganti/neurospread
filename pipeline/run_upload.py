@@ -18,14 +18,11 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Localize one uploaded EDF for the web viewer.")
     parser.add_argument("edf", type=Path, help="Path to uploaded .edf file")
     parser.add_argument("upload_id", help="Public case id, e.g. upload-abc123")
-    parser.add_argument("--tmin", type=float, required=True)
-    parser.add_argument("--tmax", type=float, required=True)
+    parser.add_argument("--tmin", type=float, default=None, help="Optional; auto-detected when omitted")
+    parser.add_argument("--tmax", type=float, default=None, help="Optional; auto-detected when omitted")
     args = parser.parse_args(argv)
     if not args.edf.is_file():
         print(f"missing file {args.edf}", file=sys.stderr)
-        return 1
-    if args.tmax <= args.tmin:
-        print("tmax must be greater than tmin", file=sys.stderr)
         return 1
 
     _load_dotenv(Path(".env"))
@@ -36,12 +33,24 @@ def main(argv: list[str] | None = None) -> int:
     if args.edf.resolve() != dest.resolve():
         dest.write_bytes(args.edf.read_bytes())
 
+    if args.tmin is None or args.tmax is None:
+        from pipeline.detect_window import detect_seizure_window
+
+        window = detect_seizure_window(dest)
+        tmin, tmax = window.tmin, window.tmax
+        print(f"Auto-detected seizure window {tmin:.1f}-{tmax:.1f}s", flush=True)
+    else:
+        tmin, tmax = args.tmin, args.tmax
+        if tmax <= tmin:
+            print("tmax must be greater than tmin", file=sys.stderr)
+            return 1
+
     synthetic: Case = {
         "id": args.upload_id,
         "file": dest.name,
         "subject": "upload",
-        "tmin": args.tmin,
-        "tmax": args.tmax,
+        "tmin": tmin,
+        "tmax": tmax,
         "hero": False,
         "title": "Your upload",
         "summary": "Personal scalp EEG processed with the same inverse pipeline.",
@@ -82,7 +91,14 @@ def main(argv: list[str] | None = None) -> int:
     if snap.is_dir():
         publish_case_snapshot(snap, config.web_public, args.upload_id)
         status_path.write_text(
-            json.dumps({"status": "ready", "caseId": args.upload_id}) + "\n",
+            json.dumps(
+                {
+                    "status": "ready",
+                    "caseId": args.upload_id,
+                    "window": {"tmin": tmin, "tmax": tmax},
+                }
+            )
+            + "\n",
             encoding="utf-8",
         )
         return 0

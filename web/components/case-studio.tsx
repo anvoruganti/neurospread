@@ -11,6 +11,7 @@ import {
   CasesManifest,
   FALLBACK_MANIFEST,
 } from "@/lib/cases";
+import { methodLabel } from "@/lib/inverse-labels";
 
 const BrainViewer = nextDynamic(
   () => import("@/components/brain-viewer").then((mod) => mod.BrainViewer),
@@ -70,7 +71,7 @@ export function CaseStudio({ manifest, liveQa, heroHasMovie }: CaseStudioProps) 
           tmax: 0,
           hero: false,
           title: "Your upload",
-          summary: "Personal scalp EEG processed with dSPM and sLORETA.",
+          summary: "Your file — automatic seizure segment and 3D maps.",
           durationSec: 0,
           ready: true,
           database: "Your file",
@@ -119,8 +120,8 @@ export function CaseStudio({ manifest, liveQa, heroHasMovie }: CaseStudioProps) 
       {selected?.hero && heroHasMovie ? (
         <Card className="overflow-hidden border-border/60 bg-card/80">
           <CardHeader>
-            <CardTitle className="text-lg">Seizure spread movie (dSPM)</CardTitle>
-            <CardDescription>Same recording as the 3D view — computed, not AI-generated.</CardDescription>
+            <CardTitle className="text-lg">Seizure spread movie</CardTitle>
+            <CardDescription>Sharp-peaks view · same recording as the 3D map (computed, not AI-drawn).</CardDescription>
           </CardHeader>
           <CardContent>
             <video
@@ -154,12 +155,12 @@ function CaseCard({
       onClick={onSelect}
       className={`group relative flex h-full flex-col rounded-2xl border p-5 text-left transition ${
         active
-          ? "border-teal-400/50 bg-gradient-to-br from-teal-500/10 to-cyan-500/5 shadow-[0_0_40px_-12px_rgba(45,212,191,0.35)]"
-          : "border-border/70 bg-card/60 hover:border-teal-500/30 hover:bg-card/90"
+          ? "border-cyan-400/50 bg-gradient-to-br from-cyan-500/10 to-orange-500/5 shadow-[0_0_48px_-12px_rgba(34,211,238,0.35)]"
+          : "border-cyan-500/15 bg-[#060a14]/70 hover:border-cyan-400/35 hover:bg-[#080d18]"
       }`}
     >
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        {entry.hero ? <Badge className="bg-teal-500/20 text-teal-100">Featured</Badge> : null}
+        {entry.hero ? <Badge className="bg-cyan-500/20 text-cyan-100">Start here</Badge> : null}
         <Badge variant="outline">{entry.durationSec}s window</Badge>
         {!entry.ready ? <Badge variant="outline">Coming soon</Badge> : null}
       </div>
@@ -167,10 +168,11 @@ function CaseCard({
       <p className="mt-2 flex-1 text-sm leading-relaxed text-muted-foreground">{entry.summary}</p>
       {entry.peaks ? (
         <p className="mt-3 text-xs text-muted-foreground">
-          Peaks · dSPM {prettyPeak(entry.peaks.dspm)} · sLORETA {prettyPeak(entry.peaks.sloreta)}
+          {methodLabel("dspm")} {prettyPeak(entry.peaks.dspm)} · {methodLabel("sloreta")}{" "}
+          {prettyPeak(entry.peaks.sloreta)}
         </p>
       ) : null}
-      <span className="mt-4 text-sm font-medium text-teal-300/90 group-hover:text-teal-200">
+      <span className="mt-4 text-sm font-medium text-cyan-300/90 group-hover:text-cyan-200">
         {active ? "Exploring now" : "Explore this case →"}
       </span>
     </button>
