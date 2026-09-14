@@ -1,0 +1,555 @@
+{
+  "recording": "chb01_04.edf",
+  "methods": [
+    "dspm",
+    "sloreta"
+  ],
+  "peaks": {
+    "dspm": {
+      "parcel": "parsorbitalis-rh",
+      "peak_time": 1486.62,
+      "peak_value": 10.425618,
+      "mean": [
+        3.247401,
+        2.62843,
+        3.43987,
+        3.622835,
+        2.598354,
+        5.204428,
+        1.919663,
+        5.810596,
+        1.247694,
+        4.031348,
+        2.713988,
+        2.907733,
+        3.133901,
+        1.144438,
+        6.110887,
+        10.425618,
+        3.879104,
+        2.985328,
+        4.802321,
+        3.524251,
+        3.35343,
+        4.279109,
+        9.363641,
+        2.874811,
+        0.383452,
+        4.795963,
+        0.853595,
+        2.898567
+      ],
+      "hemisphere": {
+        "left": 2.192171703545957,
+        "right": 2.820186693228775,
+        "left_fraction": 0.4373533434792969
+      },
+      "parcel_mean_peak": "parsorbitalis-rh"
+    },
+    "sloreta": {
+      "parcel": "parsorbitalis-rh",
+      "peak_time": 1486.62,
+      "peak_value": 7.064443,
+      "mean": [
+        2.182028,
+        1.776472,
+        2.294907,
+        2.452591,
+        1.746128,
+        3.519231,
+        1.274931,
+        3.942572,
+        0.840397,
+        2.704353,
+        1.818976,
+        1.968228,
+        2.112186,
+        0.779502,
+        4.113481,
+        7.064443,
+        2.62798,
+        1.998101,
+        3.257426,
+        2.403211,
+        2.279454,
+        2.890396,
+        6.353041,
+        1.942171,
+        0.258799,
+        3.250482,
+        0.580725,
+        1.957604
+      ],
+      "hemisphere": {
+        "left": 0.993899823801364,
+        "right": 1.3455347169553102,
+        "left_fraction": 0.424846178205052
+      },
+      "parcel_mean_peak": "parsorbitalis-rh"
+    }
+  },
+  "type": "agree",
+  "time_lag": false,
+  "time_lag_seconds": 0.0,
+  "spread_order": {
+    "dspm": [
+      {
+        "parcel": "lateralorbitofrontal-rh",
+        "time": 1469.0,
+        "peak_value": 8.996348,
+        "rank": 1
+      },
+      {
+        "parcel": "bankssts-rh",
+        "time": 1469.0,
+        "peak_value": 8.976369,
+        "rank": 2
+      },
+      {
+        "parcel": "lateraloccipital-rh",
+        "time": 1469.0,
+        "peak_value": 8.911193,
+        "rank": 3
+      },
+      {
+        "parcel": "superiortemporal-rh",
+        "time": 1469.0,
+        "peak_value": 8.821855,
+        "rank": 4
+      },
+      {
+        "parcel": "parsorbitalis-rh",
+        "time": 1474.0,
+        "peak_value": 10.425618,
+        "rank": 5
+      },
+      {
+        "parcel": "parsopercularis-rh",
+        "time": 1474.0,
+        "peak_value": 9.668315,
+        "rank": 6
+      },
+      {
+        "parcel": "transversetemporal-rh",
+        "time": 1481.0,
+        "peak_value": 9.051199,
+        "rank": 7
+      },
+      {
+        "parcel": "rostralanteriorcingulate-lh",
+        "time": 1482.0,
+        "peak_value": 8.723969,
+        "rank": 8
+      }
+    ],
+    "sloreta": [
+      {
+        "parcel": "lateraloccipital-rh",
+        "time": 1469.0,
+        "peak_value": 4.69881,
+        "rank": 1
+      },
+      {
+        "parcel": "parsorbitalis-rh",
+        "time": 1474.0,
+        "peak_value": 7.064443,
+        "rank": 2
+      },
+      {
+        "parcel": "lateralorbitofrontal-rh",
+        "time": 1474.0,
+        "peak_value": 5.192434,
+        "rank": 3
+      },
+      {
+        "parcel": "parsopercularis-rh",
+        "time": 1474.0,
+        "peak_value": 5.141476,
+        "rank": 4
+      },
+      {
+        "parcel": "rostralmiddlefrontal-rh",
+        "time": 1474.0,
+        "peak_value": 4.89484,
+        "rank": 5
+      },
+      {
+        "parcel": "parstriangularis-rh",
+        "time": 1474.0,
+        "peak_value": 4.761726,
+        "rank": 6
+      },
+      {
+        "parcel": "parsorbitalis-lh",
+        "time": 1476.0,
+        "peak_value": 5.060617,
+        "rank": 7
+      },
+      {
+        "parcel": "rostralanteriorcingulate-lh",
+        "time": 1482.0,
+        "peak_value": 4.808419,
+        "rank": 8
+      }
+    ]
+  },
+  "hemisphere_series": {
+    "dspm": {
+      "times": [
+        1467.0,
+        1468.0,
+        1469.0,
+        1470.0,
+        1471.0,
+        1472.0,
+        1473.0,
+        1474.0,
+        1475.0,
+        1476.0,
+        1477.0,
+        1478.0,
+        1479.0,
+        1480.0,
+        1481.0,
+        1482.0,
+        1483.0,
+        1484.0,
+        1485.0,
+        1486.0,
+        1487.0,
+        1488.0,
+        1489.0,
+        1490.0,
+        1491.0,
+        1492.0,
+        1493.0,
+        1494.0
+      ],
+      "left": [
+        51.895178,
+        27.929345,
+        88.050929,
+        64.536076,
+        71.220981,
+        70.216898,
+        58.811312,
+        54.88854,
+        110.95334,
+        113.214942,
+        72.073502,
+        59.436801,
+        58.146547,
+        39.433432,
+        75.569222,
+        138.843219,
+        120.57793,
+        97.655173,
+        62.846843,
+        81.244305,
+        129.621615,
+        84.656816,
+        117.260692,
+        76.153272,
+        60.621432,
+        95.659022,
+        36.120632,
+        99.471974
+      ],
+      "right": [
+        65.653413,
+        80.155207,
+        138.309453,
+        84.214225,
+        94.866168,
+        91.52818,
+        105.415093,
+        111.357067,
+        148.411361,
+        85.52411,
+        64.095539,
+        48.567501,
+        68.49047,
+        43.498928,
+        140.619773,
+        168.007139,
+        119.060059,
+        64.781765,
+        83.48675,
+        108.854136,
+        152.993117,
+        93.377996,
+        153.860763,
+        93.709044,
+        107.692102,
+        96.342202,
+        43.184198,
+        72.2372
+      ],
+      "left_fraction": [
+        0.441479,
+        0.258403,
+        0.388986,
+        0.433855,
+        0.428817,
+        0.434121,
+        0.358111,
+        0.330165,
+        0.427789,
+        0.569666,
+        0.529294,
+        0.550319,
+        0.459159,
+        0.475489,
+        0.349552,
+        0.452479,
+        0.503167,
+        0.601188,
+        0.429477,
+        0.42738,
+        0.458651,
+        0.475507,
+        0.432502,
+        0.448324,
+        0.36017,
+        0.498221,
+        0.455466,
+        0.579305
+      ]
+    },
+    "sloreta": {
+      "times": [
+        1467.0,
+        1468.0,
+        1469.0,
+        1470.0,
+        1471.0,
+        1472.0,
+        1473.0,
+        1474.0,
+        1475.0,
+        1476.0,
+        1477.0,
+        1478.0,
+        1479.0,
+        1480.0,
+        1481.0,
+        1482.0,
+        1483.0,
+        1484.0,
+        1485.0,
+        1486.0,
+        1487.0,
+        1488.0,
+        1489.0,
+        1490.0,
+        1491.0,
+        1492.0,
+        1493.0,
+        1494.0
+      ],
+      "left": [
+        25.025275,
+        12.884867,
+        42.778694,
+        29.78177,
+        31.799112,
+        32.509478,
+        26.703117,
+        27.0713,
+        51.30855,
+        54.639295,
+        35.064838,
+        28.322786,
+        28.190783,
+        18.407782,
+        37.0439,
+        68.937565,
+        58.609432,
+        45.816586,
+        30.215813,
+        39.168473,
+        63.818186,
+        39.952094,
+        54.759423,
+        33.204965,
+        26.719693,
+        45.944743,
+        16.45346,
+        48.822472
+      ],
+      "right": [
+        32.954526,
+        39.261943,
+        67.85158,
+        41.197219,
+        45.323109,
+        45.565504,
+        50.465915,
+        56.74284,
+        69.620665,
+        45.375673,
+        32.917941,
+        24.478106,
+        33.616183,
+        21.683018,
+        69.291187,
+        86.405645,
+        57.431896,
+        32.268286,
+        43.183545,
+        53.085607,
+        74.673673,
+        45.181455,
+        78.169422,
+        45.482477,
+        50.21313,
+        47.696245,
+        20.377147,
+        35.717153
+      ],
+      "left_fraction": [
+        0.431621,
+        0.247088,
+        0.386682,
+        0.419586,
+        0.412321,
+        0.416388,
+        0.346034,
+        0.322992,
+        0.424286,
+        0.546311,
+        0.51579,
+        0.536407,
+        0.45611,
+        0.459152,
+        0.348369,
+        0.443776,
+        0.505074,
+        0.586754,
+        0.411663,
+        0.424572,
+        0.460808,
+        0.469287,
+        0.411945,
+        0.421986,
+        0.347312,
+        0.490648,
+        0.446733,
+        0.57751
+      ]
+    }
+  },
+  "top_parcels": {
+    "dspm": [
+      {
+        "parcel": "parsorbitalis-rh",
+        "peak_time": 1482.0,
+        "peak_value": 10.425618
+      },
+      {
+        "parcel": "parsopercularis-rh",
+        "peak_time": 1482.0,
+        "peak_value": 9.668315
+      },
+      {
+        "parcel": "transversetemporal-rh",
+        "peak_time": 1482.0,
+        "peak_value": 9.051199
+      },
+      {
+        "parcel": "lateralorbitofrontal-rh",
+        "peak_time": 1482.0,
+        "peak_value": 8.996348
+      },
+      {
+        "parcel": "bankssts-rh",
+        "peak_time": 1475.0,
+        "peak_value": 8.976369
+      },
+      {
+        "parcel": "lateraloccipital-rh",
+        "peak_time": 1475.0,
+        "peak_value": 8.911193
+      },
+      {
+        "parcel": "superiortemporal-rh",
+        "peak_time": 1481.0,
+        "peak_value": 8.821855
+      },
+      {
+        "parcel": "rostralanteriorcingulate-lh",
+        "peak_time": 1482.0,
+        "peak_value": 8.723969
+      }
+    ],
+    "sloreta": [
+      {
+        "parcel": "parsorbitalis-rh",
+        "peak_time": 1482.0,
+        "peak_value": 7.064443
+      },
+      {
+        "parcel": "lateralorbitofrontal-rh",
+        "peak_time": 1482.0,
+        "peak_value": 5.192434
+      },
+      {
+        "parcel": "parsopercularis-rh",
+        "peak_time": 1482.0,
+        "peak_value": 5.141476
+      },
+      {
+        "parcel": "parsorbitalis-lh",
+        "peak_time": 1487.0,
+        "peak_value": 5.060617
+      },
+      {
+        "parcel": "rostralmiddlefrontal-rh",
+        "peak_time": 1489.0,
+        "peak_value": 4.89484
+      },
+      {
+        "parcel": "rostralanteriorcingulate-lh",
+        "peak_time": 1482.0,
+        "peak_value": 4.808419
+      },
+      {
+        "parcel": "parstriangularis-rh",
+        "peak_time": 1482.0,
+        "peak_value": 4.761726
+      },
+      {
+        "parcel": "lateraloccipital-rh",
+        "peak_time": 1475.0,
+        "peak_value": 4.69881
+      }
+    ]
+  },
+  "highlight": [
+    "parsorbitalis-rh",
+    "parsorbitalis-rh"
+  ],
+  "source": "deterministic",
+  "captions": [
+    {
+      "t": 1467.0,
+      "method": "dspm",
+      "text": "Computed captions for chb01_04.edf. They come from parcel numbers, not from a language model."
+    },
+    {
+      "t": 1486.62,
+      "method": "dspm",
+      "text": "dSPM peaks in parsorbitalis-rh at 1486.62 s."
+    },
+    {
+      "t": 1486.62,
+      "method": "sloreta",
+      "text": "sLORETA peaks in parsorbitalis-rh at 1486.62 s."
+    },
+    {
+      "t": 1486.62,
+      "method": "dspm",
+      "text": "The two inverses peak in the same parcel in this window."
+    }
+  ]
+}

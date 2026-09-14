@@ -15,6 +15,7 @@ import urllib.request
 from pathlib import Path
 
 from pipeline.cases import CHB01_CASES
+from pipeline.outputs import publish_case_snapshot, write_cases_manifest
 from pipeline.run import RunConfig, _complete, _load_dotenv, mne_localize, mne_render, run_pipeline
 
 
@@ -54,6 +55,10 @@ def main(argv: list[str] | None = None) -> int:
             render_stc=mne_render,
             complete=_complete,
         )
+        snap = config.out_dir / "cases" / case["id"]
+        if snap.is_dir():
+            publish_case_snapshot(snap, config.web_public, case["id"])
+    write_cases_manifest(config_root.web_public)
     return 0
 
 

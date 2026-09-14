@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 :root {
-  --background: #07080a;
-  --foreground: #e6eaee;
+  --background: #030712;
+  --foreground: #f1f5f9;
   --card: #101317;
   --card-foreground: #e6eaee;
   --primary: #d7e0e6;
@@ -26,9 +26,18 @@
   @apply border-border;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 html,
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display), ui-sans-serif, system-ui, sans-serif;
 }

@@ -1,0 +1,26 @@
+{
+  "status": "ok",
+  "source": "deterministic",
+  "captions": [
+    {
+      "t": 1467.0,
+      "method": "dspm",
+      "text": "Computed captions for chb01_04.edf. They come from parcel numbers, not from a language model."
+    },
+    {
+      "t": 1486.62,
+      "method": "dspm",
+      "text": "dSPM peaks in parsorbitalis-rh at 1486.62 s."
+    },
+    {
+      "t": 1486.62,
+      "method": "sloreta",
+      "text": "sLORETA peaks in parsorbitalis-rh at 1486.62 s."
+    },
+    {
+      "t": 1486.62,
+      "method": "dspm",
+      "text": "The two inverses peak in the same parcel in this window."
+    }
+  ]
+}

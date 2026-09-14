@@ -36,10 +36,12 @@ import {
   prettyParcel,
   propagationPath,
 } from "@/lib/guide";
+import { caseBasePath } from "@/lib/cases";
 import { SeizureStats, downloadReport } from "@/lib/report";
 
 type BrainViewerProps = {
   liveQa: boolean;
+  caseId: string;
 };
 
 type LoadedBrain = {
@@ -320,7 +322,11 @@ function CortexScene({
   );
 }
 
-export function BrainViewer({ liveQa }: BrainViewerProps) {
+function brainAssetBase(caseId: string): string {
+  return `${caseBasePath(caseId)}/brain`;
+}
+
+export function BrainViewer({ liveQa, caseId }: BrainViewerProps) {
   const [data, setData] = useState<LoadedBrain | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [method, setMethod] = useState<MethodName>("dspm");
@@ -337,16 +343,30 @@ export function BrainViewer({ liveQa }: BrainViewerProps) {
   useEffect(() => {
     let cancelled = false;
     async function load() {
-      try {
-        const [meshRes, parcelsRes, activityRes, disagreementRes, statsRes] = await Promise.all([
-          fetch("/brain/mesh.json"),
-          fetch("/brain/parcels.json"),
-          fetch("/brain/activity.bin"),
-          fetch("/brain/disagreement.json"),
-          fetch("/seizure-stats.json"),
+      async function tryBundle(brainPrefix: string, statsPath: string) {
+        return Promise.all([
+          fetch(`${brainPrefix}/mesh.json`),
+          fetch(`${brainPrefix}/parcels.json`),
+          fetch(`${brainPrefix}/activity.bin`),
+          fetch(`${brainPrefix}/disagreement.json`),
+          fetch(statsPath),
         ]);
+      }
+      try {
+        let [meshRes, parcelsRes, activityRes, disagreementRes, statsRes] = await tryBundle(
+          brainAssetBase(caseId),
+          `${caseBasePath(caseId)}/seizure-stats.json`
+        );
         if (!meshRes.ok || !parcelsRes.ok || !activityRes.ok) {
-          throw new Error("missing");
+          if (caseId === "chb01_03") {
+            [meshRes, parcelsRes, activityRes, disagreementRes, statsRes] = await tryBundle(
+              "/brain",
+              "/seizure-stats.json"
+            );
+          }
+          if (!meshRes.ok || !parcelsRes.ok || !activityRes.ok) {
+            throw new Error("missing");
+          }
         }
         const mesh = (await meshRes.json()) as BrainMesh;
         const parcels = (await parcelsRes.json()) as ParcelsFile;
@@ -370,11 +390,13 @@ export function BrainViewer({ liveQa }: BrainViewerProps) {
         }
       }
     }
+    setData(null);
+    setError(null);
     load();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [caseId]);
 
   useEffect(() => {
     if (!playing || !data) return;
@@ -464,13 +486,11 @@ export function BrainViewer({ liveQa }: BrainViewerProps) {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Interactive fsaverage cortex</CardTitle>
+      <CardHeader className="border-b border-border/60 pb-4">
+        <CardTitle className="text-lg">3D seizure map</CardTitle>
         <CardDescription>
-          Colored by the computed source estimate. Path mode dims parcels off
-          the start-to-peak spread and draws arrows along that order. That
-          order is half-peak crossing in strong parcels, not electrographic
-          onset. Click a caption to seek.
+          Drag to rotate. Click a brain region to ask what it means. Toggle dSPM,
+          sLORETA, or both. Download an automated draft note for your chart.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

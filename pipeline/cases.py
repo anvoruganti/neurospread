@@ -14,6 +14,8 @@ class Case(TypedDict):
     tmin: float
     tmax: float
     hero: bool
+    title: str
+    summary: str
 
 
 CHB01_CASES: tuple[Case, ...] = (
@@ -24,6 +26,8 @@ CHB01_CASES: tuple[Case, ...] = (
         "tmin": 2996.0,
         "tmax": 3036.0,
         "hero": True,
+        "title": "Seizure 3 — temporal spread",
+        "summary": "Classic annotated window with clear dSPM vs sLORETA disagreement.",
     },
     {
         "id": "chb01_04",
@@ -32,6 +36,8 @@ CHB01_CASES: tuple[Case, ...] = (
         "tmin": 1467.0,
         "tmax": 1494.0,
         "hero": False,
+        "title": "Seizure 4 — shorter burst",
+        "summary": "27-second window; good for comparing peak timing across inverses.",
     },
     {
         "id": "chb01_15",
@@ -40,6 +46,8 @@ CHB01_CASES: tuple[Case, ...] = (
         "tmin": 1732.0,
         "tmax": 1772.0,
         "hero": False,
+        "title": "Seizure 15 — frontal build-up",
+        "summary": "40-second segment from the same CHB-MIT subject.",
     },
     {
         "id": "chb01_16",
@@ -48,6 +56,8 @@ CHB01_CASES: tuple[Case, ...] = (
         "tmin": 1015.0,
         "tmax": 1066.0,
         "hero": False,
+        "title": "Seizure 16 — early recording",
+        "summary": "51-second window with a different spread signature.",
     },
     {
         "id": "chb01_18",
@@ -56,6 +66,8 @@ CHB01_CASES: tuple[Case, ...] = (
         "tmin": 1720.0,
         "tmax": 1810.0,
         "hero": False,
+        "title": "Seizure 18 — long evolution",
+        "summary": "90-second seizure; watch propagation order change over time.",
     },
     {
         "id": "chb01_21",
@@ -64,6 +76,8 @@ CHB01_CASES: tuple[Case, ...] = (
         "tmin": 327.0,
         "tmax": 420.0,
         "hero": False,
+        "title": "Seizure 21",
+        "summary": "Extended CHB-MIT window (probe set).",
     },
     {
         "id": "chb01_26",
@@ -72,8 +86,24 @@ CHB01_CASES: tuple[Case, ...] = (
         "tmin": 1862.0,
         "tmax": 1963.0,
         "hero": False,
+        "title": "Seizure 26",
+        "summary": "Extended CHB-MIT window (probe set).",
     },
 )
+
+# Five recordings surfaced on the public site (hero + four more from PhysioNet CHB-MIT).
+WEB_FEATURED_CASE_IDS: tuple[str, ...] = (
+    "chb01_03",
+    "chb01_04",
+    "chb01_15",
+    "chb01_16",
+    "chb01_18",
+)
+
+
+def featured_web_cases() -> tuple[Case, ...]:
+    by_id = {case["id"]: case for case in CHB01_CASES}
+    return tuple(by_id[cid] for cid in WEB_FEATURED_CASE_IDS)
 
 
 def get_case(case_id: str) -> Case:

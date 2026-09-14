@@ -1,247 +1,113 @@
-import { existsSync, readdirSync, readFileSync } from "fs";
+import { existsSync, readFileSync } from "fs";
 import path from "path";
-import Image from "next/image";
-import nextDynamic from "next/dynamic";
 
+import { CaseStudio } from "@/components/case-studio";
+import { SiteFooter } from "@/components/site-footer";
+import { SiteHeader } from "@/components/site-header";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LIMITATIONS } from "@/lib/ask";
+import { CasesManifest, FALLBACK_MANIFEST } from "@/lib/cases";
 
 export const dynamic = "force-dynamic";
-
-const BrainViewer = nextDynamic(
-  () => import("@/components/brain-viewer").then((mod) => mod.BrainViewer),
-  {
-    ssr: false,
-    loading: () => (
-      <Card>
-        <CardContent className="py-8">
-          <p className="text-sm text-muted-foreground">Loading interactive cortex…</p>
-        </CardContent>
-      </Card>
-    ),
-  }
-);
-
-const DSPM_MOVIE = "seizure-dspm.mp4";
-const SLORETA_MOVIE = "seizure-sloreta.mp4";
-
-type Caption = { t?: number; method?: string; text?: string };
-type Walkthrough = { status?: string; source?: string; captions?: Caption[]; message?: string };
 
 function publicPath(...parts: string[]) {
   return path.join(process.cwd(), "public", ...parts);
 }
 
-function publicExists(...parts: string[]) {
-  return existsSync(publicPath(...parts));
-}
-
-function loadWalkthrough(): Walkthrough {
-  if (!publicExists("astra-walkthrough.json")) {
-    return { status: "missing", captions: [] };
+function loadManifest(): CasesManifest {
+  const manifestPath = publicPath("cases", "manifest.json");
+  if (!existsSync(manifestPath)) {
+    return FALLBACK_MANIFEST;
   }
-  return JSON.parse(readFileSync(publicPath("astra-walkthrough.json"), "utf8")) as Walkthrough;
-}
-
-function loadStills(): string[] {
-  const dir = publicPath("stills");
-  if (!existsSync(dir)) {
-    return [];
-  }
-  return readdirSync(dir)
-    .filter((name) => name.endsWith(".png"))
-    .sort()
-    .map((name) => `/stills/${name}`);
+  return JSON.parse(readFileSync(manifestPath, "utf8")) as CasesManifest;
 }
 
 export default function Home() {
-  const hasDspm = publicExists(DSPM_MOVIE);
-  const hasSloreta = publicExists(SLORETA_MOVIE);
-  const stills = loadStills();
-  const walkthrough = loadWalkthrough();
-  const captions = walkthrough.captions ?? [];
+  const manifest = loadManifest();
   const liveQa = Boolean(process.env.OPENAI_API_KEY);
-  const hasBrain = publicExists("brain", "mesh.json");
+  const heroHasMovie = existsSync(publicPath("seizure-dspm.mp4"));
+  const readyCount = manifest.cases.filter((c) => c.ready).length;
 
   return (
-    <main className="mx-auto flex min-h-screen max-w-5xl flex-col gap-20 px-6 py-16 sm:px-10">
-      <section className="space-y-6">
-        <div className="space-y-3">
-          <Badge variant="outline">Public CHB-MIT recording</Badge>
-          <h1 className="text-4xl font-medium tracking-tight text-foreground sm:text-5xl">
-            NeuroSpread
+    <>
+      <SiteHeader />
+      <main className="relative overflow-hidden">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(45,212,191,0.18),transparent)]" />
+        <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_at_center,black,transparent_75%)]" />
+
+        <section className="relative mx-auto max-w-6xl px-6 pb-8 pt-16 sm:px-10 sm:pt-24">
+          <div className="flex flex-wrap gap-2">
+            <Badge className="bg-teal-500/15 text-teal-100">Seizure source imaging</Badge>
+            <Badge variant="outline">CHB-MIT · PhysioNet</Badge>
+            <Badge variant="outline">{readyCount} live examples</Badge>
+          </div>
+          <h1 className="mt-6 max-w-3xl text-4xl font-semibold tracking-tight text-foreground sm:text-6xl sm:leading-[1.05]">
+            See how a seizure moves across the brain
           </h1>
-          <p className="max-w-2xl text-base leading-relaxed text-muted-foreground">
-            I computed seizure spread on a template brain from one de-identified
-            scalp EEG file. The interactive cortex is colored by dSPM and
-            sLORETA source estimates. Captions and overlays come from those
-            numbers. They do not draw the map. This is a proof of concept, not a
-            clinical tool.
+          <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
+            NeuroSpread turns scalp EEG into an interactive 3D map. Compare{" "}
+            <span className="text-foreground">dSPM</span> and{" "}
+            <span className="text-foreground">sLORETA</span>, watch spread over time, click any
+            region to ask what it means, and download a draft report — built for epileptologists,
+            trainees, and families learning how source imaging works.
           </p>
-        </div>
-        <BrainViewer liveQa={liveQa} />
-        {!hasBrain ? (
-          <p className="text-sm text-muted-foreground">
-            Public CHB-MIT seizure, template brain, not a patient-specific map.
-          </p>
-        ) : null}
-      </section>
+          <div className="mt-10 flex flex-wrap gap-4">
+            <a
+              href="#explore"
+              className="inline-flex items-center justify-center rounded-full bg-teal-400 px-6 py-3 text-sm font-medium text-slate-950 transition hover:bg-teal-300"
+            >
+              Browse example seizures
+            </a>
+            <a
+              href="#upload"
+              className="inline-flex items-center justify-center rounded-full border border-border/80 bg-card/50 px-6 py-3 text-sm font-medium text-foreground backdrop-blur transition hover:border-teal-500/40"
+            >
+              Upload your EEG
+            </a>
+          </div>
+        </section>
 
-      <section className="space-y-6">
-        <h2 className="text-2xl font-medium tracking-tight">How it works</h2>
-        <p className="text-base leading-relaxed text-muted-foreground">
-          The pipeline downloads chb01_03.edf from PhysioNet, keeps the
-          annotated window from 2996 to 3036 seconds, and filters at 1-40 Hz
-          with a 60 Hz notch. Channels are mapped from CHB-MIT bipolar labels
-          onto a standard 10-20 montage. That mapping is an approximation.
-        </p>
-        <p className="text-base leading-relaxed text-muted-foreground">
-          There is no patient MRI, so the forward model uses fsaverage. The
-          same window and head model are solved twice, as dSPM and as sLORETA.
-          The 3D viewer and the movies below are both screenshots or meshes of
-          that source estimate. No image-generation model is used.
-        </p>
-        <Card>
-          <CardHeader>
-            <CardTitle>Computed screenshot movies</CardTitle>
-            <CardDescription>
-              Offline MNE Brain screenshots for dSPM and sLORETA. Same data as
-              the interactive cortex, fixed camera.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {hasDspm ? (
-              <video
-                className="w-full bg-black"
-                src={`/${DSPM_MOVIE}`}
-                autoPlay
-                muted
-                loop
-                playsInline
-                controls
-              />
-            ) : (
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                The dSPM movie is not here yet. Run python -m pipeline to
-                compute it from the source estimate.
-              </p>
-            )}
-            {hasSloreta ? (
-              <video
-                className="w-full bg-black"
-                src={`/${SLORETA_MOVIE}`}
-                controls
-                playsInline
-                preload="metadata"
-              />
-            ) : (
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                The sLORETA movie is missing until the pipeline has been run.
-              </p>
-            )}
-            {stills.length > 0 ? (
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {stills.map((src) => (
-                  <Image
-                    key={src}
-                    src={src}
-                    alt={`Still from the computed source estimate ${src}`}
-                    width={1200}
-                    height={800}
-                    className="h-auto w-full bg-black"
-                  />
-                ))}
-              </div>
-            ) : null}
-          </CardContent>
-        </Card>
-      </section>
+        <section className="relative mx-auto max-w-6xl px-6 py-16 sm:px-10">
+          <div className="grid gap-6 md:grid-cols-3">
+            <Feature
+              title="Propagation, not a snapshot"
+              body="Scrub time and watch estimated activity spread on a template cortex — clearer than a static trace for teaching and rounds."
+            />
+            <Feature
+              title="Two inverses, one recording"
+              body="dSPM and sLORETA use the same data. When they disagree, the tool says so — that ambiguity is the point."
+            />
+            <Feature
+              title="Draft reports faster"
+              body="Export a structured localization note from computed peaks and spread order to speed up documentation (not a substitute for clinical read)."
+            />
+          </div>
+        </section>
 
-      <section className="space-y-6">
-        <h2 className="text-2xl font-medium tracking-tight">Disagreement probe</h2>
-        <p className="text-base leading-relaxed text-muted-foreground">
-          Captions on the cortex are computed from parcel JSON, not from a
-          language model. Live Q&A, when the key is set, uses a cheap Chat
-          Completions model and can seek or highlight those same parcels. Astra
-          is a study subject for the disagreement prompt, not the runtime that
-          draws overlays.
-        </p>
-        <Card>
-          <CardHeader>
-            <CardTitle>What this week can claim</CardTitle>
-            <CardDescription>
-              Seven chb01 seizures, author-scored, no ground truth for which
-              inverse is right.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              dSPM and sLORETA can peak in different parcels on the same window.
-              That is ambiguity on a template inverse. The probe asks whether
-              models admit that or invent a clean story. The protocol, rubric,
-              and frozen prompt live in the study/ folder. Other CHB-MIT
-              subjects and an expert rater are later work. The title has to
-              match that evidence.
+        <section className="relative mx-auto max-w-6xl px-6 pb-24 sm:px-10">
+          <CaseStudio manifest={manifest} liveQa={liveQa} heroHasMovie={heroHasMovie} />
+        </section>
+
+        <section className="border-t border-border/60 bg-card/30">
+          <div className="mx-auto max-w-6xl px-6 py-16 sm:px-10">
+            <h2 className="text-2xl font-semibold tracking-tight">Built for trust</h2>
+            <p className="mt-4 max-w-3xl text-muted-foreground leading-relaxed">
+              Public de-identified data and a standard head model (fsaverage). No patient MRI. No
+              image-generation AI on the brain map — colors come from MNE source estimates. Not
+              FDA-cleared; not for diagnosis or surgical planning without your own validation.
             </p>
-            {walkthrough.source === "deterministic" && captions.length > 0 ? (
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Hero-case captions are also listed on the cortex above. They
-                seek the playhead.
-              </p>
-            ) : null}
-          </CardContent>
-        </Card>
-      </section>
+          </div>
+        </section>
+      </main>
+      <SiteFooter />
+    </>
+  );
+}
 
-      <section className="space-y-4">
-        <h2 className="text-2xl font-medium tracking-tight">Who this is for</h2>
-        <p className="text-base leading-relaxed text-muted-foreground">
-          Neurologists and epileptologists usually see a static scan or a page
-          of traces. Source-localized EEG can show spread over time. That is
-          useful as a way to talk about surgical planning in principle. This
-          build is public data, not that workflow.
-        </p>
-        <p className="text-base leading-relaxed text-muted-foreground">
-          Engineers can inspect a real scientific pipeline here, not another
-          chatbot demo. The visualization is traced to an inverse solution on
-          a public recording.
-        </p>
-        <p className="text-base leading-relaxed text-muted-foreground">
-          This does not replace clinical care. It cannot tell anyone where to
-          resect, what to prescribe, or how to treat a patient.
-        </p>
-      </section>
-
-      <section className="space-y-4">
-        <h2 className="text-2xl font-medium tracking-tight">Limitations</h2>
-        <Card>
-          <CardContent className="pt-1">
-            <p className="text-base leading-relaxed text-muted-foreground">
-              {LIMITATIONS} The head model is a template. The bipolar-to-10-20
-              channel mapping is an approximation. Volume conduction leaves
-              centimeters of uncertainty, not millimeters. The interactive
-              cortex is fsaverage colored by the source estimate, not a
-              patient-specific anatomy and not an Astra-generated picture.
-            </p>
-          </CardContent>
-        </Card>
-      </section>
-
-      <section className="space-y-3 pb-8">
-        <h2 className="text-2xl font-medium tracking-tight">Links</h2>
-        <p className="text-base leading-relaxed text-muted-foreground">
-          <a
-            className="text-accent underline-offset-4 hover:underline"
-            href="https://github.com/anvoruganti/neurospread"
-          >
-            GitHub
-          </a>
-        </p>
-        <p className="text-base leading-relaxed text-muted-foreground">
-          Full write-up: Coming soon.
-        </p>
-      </section>
-    </main>
+function Feature({ title, body }: { title: string; body: string }) {
+  return (
+    <div className="rounded-2xl border border-border/60 bg-card/50 p-6 backdrop-blur">
+      <h3 className="text-base font-medium text-foreground">{title}</h3>
+      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{body}</p>
+    </div>
   );
 }

@@ -1,0 +1,26 @@
+{
+  "status": "ok",
+  "source": "deterministic",
+  "captions": [
+    {
+      "t": 1720.0,
+      "method": "dspm",
+      "text": "Computed captions for chb01_18.edf. They come from parcel numbers, not from a language model."
+    },
+    {
+      "t": 1759.37,
+      "method": "dspm",
+      "text": "dSPM peaks in supramarginal-lh at 1759.37 s."
+    },
+    {
+      "t": 1757.81,
+      "method": "sloreta",
+      "text": "sLORETA peaks in rostralmiddlefrontal-lh at 1757.81 s."
+    },
+    {
+      "t": 1759.37,
+      "method": "dspm",
+      "text": "The inverses disagree (distant). That is ambiguity on a template inverse, not a known focus."
+    }
+  ]
+}

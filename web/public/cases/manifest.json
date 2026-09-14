@@ -1,0 +1,91 @@
+{
+  "version": 1,
+  "defaultCaseId": "chb01_03",
+  "cases": [
+    {
+      "id": "chb01_03",
+      "file": "chb01_03.edf",
+      "subject": "chb01",
+      "tmin": 2996.0,
+      "tmax": 3036.0,
+      "hero": true,
+      "title": "Seizure 3 \u2014 temporal spread",
+      "summary": "Classic annotated window with clear dSPM vs sLORETA disagreement.",
+      "durationSec": 40,
+      "ready": true,
+      "database": "CHB-MIT Scalp EEG (PhysioNet)",
+      "peaks": {
+        "dspm": "inferiortemporal-rh",
+        "sloreta": "parstriangularis-rh"
+      }
+    },
+    {
+      "id": "chb01_04",
+      "file": "chb01_04.edf",
+      "subject": "chb01",
+      "tmin": 1467.0,
+      "tmax": 1494.0,
+      "hero": false,
+      "title": "Seizure 4 \u2014 shorter burst",
+      "summary": "27-second window; good for comparing peak timing across inverses.",
+      "durationSec": 27,
+      "ready": true,
+      "database": "CHB-MIT Scalp EEG (PhysioNet)",
+      "peaks": {
+        "dspm": "parsorbitalis-rh",
+        "sloreta": "parsorbitalis-rh"
+      }
+    },
+    {
+      "id": "chb01_15",
+      "file": "chb01_15.edf",
+      "subject": "chb01",
+      "tmin": 1732.0,
+      "tmax": 1772.0,
+      "hero": false,
+      "title": "Seizure 15 \u2014 frontal build-up",
+      "summary": "40-second segment from the same CHB-MIT subject.",
+      "durationSec": 40,
+      "ready": true,
+      "database": "CHB-MIT Scalp EEG (PhysioNet)",
+      "peaks": {
+        "dspm": "lateralorbitofrontal-rh",
+        "sloreta": "parsorbitalis-rh"
+      }
+    },
+    {
+      "id": "chb01_16",
+      "file": "chb01_16.edf",
+      "subject": "chb01",
+      "tmin": 1015.0,
+      "tmax": 1066.0,
+      "hero": false,
+      "title": "Seizure 16 \u2014 early recording",
+      "summary": "51-second window with a different spread signature.",
+      "durationSec": 51,
+      "ready": true,
+      "database": "CHB-MIT Scalp EEG (PhysioNet)",
+      "peaks": {
+        "dspm": "parsorbitalis-lh",
+        "sloreta": "rostralmiddlefrontal-lh"
+      }
+    },
+    {
+      "id": "chb01_18",
+      "file": "chb01_18.edf",
+      "subject": "chb01",
+      "tmin": 1720.0,
+      "tmax": 1810.0,
+      "hero": false,
+      "title": "Seizure 18 \u2014 long evolution",
+      "summary": "90-second seizure; watch propagation order change over time.",
+      "durationSec": 90,
+      "ready": true,
+      "database": "CHB-MIT Scalp EEG (PhysioNet)",
+      "peaks": {
+        "dspm": "supramarginal-lh",
+        "sloreta": "rostralmiddlefrontal-lh"
+      }
+    }
+  ]
+}

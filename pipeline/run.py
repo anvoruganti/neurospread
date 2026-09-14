@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from pipeline.astra import MissingAPIKeyError, request_walkthrough
-from pipeline.cases import get_case
+from pipeline.cases import Case, get_case
 from pipeline.cortex import export_browser_cortex
 from pipeline.disagreement import analyze_disagreement
 from pipeline.download import DownloadError, download_edf
@@ -70,6 +70,7 @@ class RunConfig:
     skip_render: bool = False
     skip_publish: bool = False
     llm_walkthrough: bool = False
+    case_override: Case | None = None
 
 
 def _method_stats(stc: Any, window) -> dict:
@@ -95,7 +96,7 @@ def run_pipeline(
     render_stc: Callable,
     complete: Callable,
 ) -> dict:
-    case = get_case(config.case_id)
+    case = config.case_override if config.case_override is not None else get_case(config.case_id)
     raw_path = download_edf(config.data_dir, fetch, case["file"])
     window = TimeWindow(tmin=case["tmin"], tmax=case["tmax"])
     filters = default_filter_config()

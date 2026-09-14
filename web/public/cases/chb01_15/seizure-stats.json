@@ -1,0 +1,39 @@
+{
+  "recording": "chb01_15.edf",
+  "window": {
+    "tmin": 1732.0,
+    "tmax": 1772.0
+  },
+  "filters": {
+    "l_freq": 1.0,
+    "h_freq": 40.0,
+    "notch_freq": 60.0
+  },
+  "src": "fsaverage",
+  "methods": [
+    "dspm",
+    "sloreta"
+  ],
+  "per_method": {
+    "dspm": {
+      "peak_time": 1769.91,
+      "peak_label": "lateralorbitofrontal-rh",
+      "peak_index": 19402,
+      "hemisphere": {
+        "left": 1.5492603860764793,
+        "right": 1.6065187497779096,
+        "left_fraction": 0.49092801472528774
+      }
+    },
+    "sloreta": {
+      "peak_time": 1769.91,
+      "peak_label": "parsorbitalis-rh",
+      "peak_index": 11377,
+      "hemisphere": {
+        "left": 0.7193366974511501,
+        "right": 0.7410350013635587,
+        "left_fraction": 0.4925709653473771
+      }
+    }
+  }
+}
